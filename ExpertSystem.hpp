@@ -1,6 +1,10 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <iostream>
+#include <stdexcept>
+#include <fstream>
+#include <cctype>
 
 // => is an implicator
 // ! is (not) true
@@ -25,6 +29,10 @@ private:
     std::vector<char> _queries;
 
 public:
+    // Constructors/Destructors
     ExpertSystem(std::string fileName);
     ~ExpertSystem();
+
+    // Parsing methods
+    bool isCommentOrEmpty(std::string) const;
 };
