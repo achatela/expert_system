@@ -35,4 +35,6 @@ public:
 
     // Parsing methods
     bool isCommentOrEmpty(std::string) const;
+    bool isInitialFact(std::string) const;
+    bool isQuery(std::string) const;
 };
