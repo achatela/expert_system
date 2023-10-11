@@ -8,6 +8,10 @@
 #include <cctype>
 #include <sstream>
 
+#ifndef DEBUG
+#define DEBUG 0
+#endif
+
 // => is an implicator
 // ! is (not) true
 // D is the result

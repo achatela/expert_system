@@ -1,4 +1,4 @@
-#include "ExpertSystem.hpp"
+#include "../includes/ExpertSystem.hpp"
 
 // Constructor/Destructor
 
@@ -10,7 +10,6 @@ ExpertSystem::ExpertSystem(std::string fileName)
         throw std::invalid_argument("File extension is not .txt");
 
     std::ifstream ifs(fileName);
-    std::vector<std::string> rules;
     bool initialized = false;
     bool queryInitialized = false;
     for (std::string line; std::getline(ifs, line);)
@@ -31,6 +30,21 @@ ExpertSystem::ExpertSystem(std::string fileName)
             if (queryInitialized == true)
                 throw std::invalid_argument("Multiple query lines !");
             // logic to set the query characters in the _queries TODO
+            for (unsigned long i = 0; i < line.length(); i++)
+            {
+                if (isspace(line[i]))
+                    continue;
+                if (line[i] == '?')
+                {
+                    i++;
+                    if (i >= line.length())
+                        throw std::invalid_argument("Query line has to have atleast one character !");
+                    while (i < line.length() && isupper(line[i]))
+                        _queries.push_back(line[i++]);
+                }
+                else
+                    break;
+            }
             queryInitialized = true;
         }
         else // lines with facts
@@ -47,11 +61,24 @@ ExpertSystem::ExpertSystem(std::string fileName)
             addLineToRules(tmp_vector);
         }
     }
-    for (auto it : _rules)
+
+    if (DEBUG)
     {
+        for (auto it : _rules)
+        {
+            std::cout << std::endl;
+            for (auto it2 : it)
+                std::cout << it2 << std::endl;
+        }
+        std::cout << std::endl
+                  << "_facts:" << std::endl;
+        for (auto it : _facts)
+            std::cout << it.first << " is " << it.second << " ";
+        std::cout << std::endl
+                  << "_queries:" << std::endl;
+        for (auto it : _queries)
+            std::cout << it;
         std::cout << std::endl;
-        for (auto it2 : it)
-            std::cout << it2 << std::endl;
     }
 }
 
@@ -61,7 +88,7 @@ ExpertSystem::~ExpertSystem() {}
 
 bool ExpertSystem::isCommentOrEmpty(std::string line) const
 {
-    for (int i = 0; i < line.length(); i++)
+    for (unsigned long i = 0; i < line.length(); i++)
     {
         if (isalnum(line[i]))
             return (false);
@@ -73,7 +100,7 @@ bool ExpertSystem::isCommentOrEmpty(std::string line) const
 
 bool ExpertSystem::isQuery(std::string line) const
 {
-    for (int i = 0; i < line.length(); i++)
+    for (unsigned long i = 0; i < line.length(); i++)
     {
         if (isspace(line[i]))
             continue;
@@ -100,7 +127,7 @@ bool ExpertSystem::isQuery(std::string line) const
 
 bool ExpertSystem::isInitialFact(std::string line) const
 {
-    for (int i = 0; i < line.length(); i++)
+    for (unsigned long i = 0; i < line.length(); i++)
     {
         if (isspace(line[i]))
             continue;
@@ -146,11 +173,13 @@ void ExpertSystem::addLineToRules(std::vector<std::string> line)
             {
                 tmp.isFact = true;
                 tmp.value = std::string(it);
+                _facts[it[0]] = false;
             }
             else
             {
                 tmp.isResult = true;
                 tmp.value = std::string(it);
+                _facts[it[0]] = false;
             }
         }
         else if (it[0] == '!')
@@ -164,12 +193,14 @@ void ExpertSystem::addLineToRules(std::vector<std::string> line)
                     tmp.isFact = true;
                     tmp.isTrue = false;
                     tmp.value = std::string(it);
+                    _facts[it[1]] = false;
                 }
                 else
                 {
                     tmp.isResult = true;
                     tmp.isTrue = false;
                     tmp.value = std::string(it);
+                    _facts[it[1]] = false;
                 }
             }
         }
@@ -210,9 +241,10 @@ void ExpertSystem::checkLineValidity(std::vector<Rules> toRules)
         throw std::invalid_argument("A line has invalid format !");
     if (toRules[0].isFact == false || toRules[toRules.size() - 1].isResult == false)
         throw std::invalid_argument("A line has to start with a fact and end with a result !");
-    for (int i = 0; i < toRules.size(); i++)
+    for (unsigned long i = 0; i < toRules.size(); i++)
     {
         Rules it = toRules[i];
+        // keep track ( and ) TODO
         if (hasFact == false && it.isFact == true)
             hasFact = true;
         else if (hasImplicator == false && it.isImplicator == true)
@@ -242,6 +274,6 @@ void ExpertSystem::checkLineValidity(std::vector<Rules> toRules)
             lastWas = 0;
         }
     }
-    // if (hasFact != true || hasImplicator != true || hasResult != true)
-    //     throw std::invalid_argument("Every line needs at least one fact, implicator, and argument !");
+    if (hasFact != true || hasImplicator != true || hasResult != true)
+        throw std::invalid_argument("Every line needs at least one fact, implicator, and argument !");
 }
