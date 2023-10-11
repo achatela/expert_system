@@ -15,7 +15,7 @@
 // => is an implicator
 // ! is (not) true
 // D is the result
-struct Rules
+struct Token
 {
     bool isFact = false;       // A B C... are facts
     bool isOperator = false;   // + | ^ are operators
@@ -24,7 +24,7 @@ struct Rules
     bool isTrue = true;        // ! is (not) true
     std::string value;
 
-    friend std::ostream &operator<<(std::ostream &os, const Rules &rules)
+    friend std::ostream &operator<<(std::ostream &os, const Token &rules)
     {
         os << "value: " << rules.value << " ";
 
@@ -48,7 +48,7 @@ struct Rules
 class ExpertSystem
 {
 private:
-    std::vector<std::vector<Rules>> _rules;
+    std::vector<std::vector<Token>> _rules;
     std::map<char, int> _facts;
     std::vector<char> _queries;
 
@@ -64,5 +64,9 @@ public:
 
     //
     void addLineToRules(std::vector<std::string>);
-    void checkLineValidity(std::vector<Rules>);
+    void checkLineValidity(std::vector<Token>);
+    void printDebug(std::string);
+    void expertLogic();
+    bool recursiveLogic(std::vector<std::vector<Token>>, std::vector<Token>, std::map<char, int> &);
+    std::vector<std::vector<Token>> createQueryNeighbours(std::vector<std::vector<Token>>, char);
 };

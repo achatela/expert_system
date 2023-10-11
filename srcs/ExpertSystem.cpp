@@ -12,6 +12,7 @@ ExpertSystem::ExpertSystem(std::string fileName)
     std::ifstream ifs(fileName);
     bool initialized = false;
     bool queryInitialized = false;
+    std::string toInitialize;
     for (std::string line; std::getline(ifs, line);)
     {
         if (isCommentOrEmpty(line))
@@ -20,7 +21,21 @@ ExpertSystem::ExpertSystem(std::string fileName)
         {
             if (initialized == true)
                 throw std::invalid_argument("Multiple initial facts lines !");
-            // logic to set the characters to true TODO
+            for (unsigned long i = 0; i < line.length(); i++)
+            {
+                if (isspace(line[i]))
+                    continue;
+                if (line[i] == '=')
+                {
+                    i++;
+                    if (i >= line.length())
+                        throw std::invalid_argument("Query line has to have atleast one character !");
+                    while (i < line.length() && isupper(line[i]))
+                        toInitialize += line[i++];
+                }
+                else
+                    break;
+            }
             initialized = true;
         }
         else if (isQuery(line))
@@ -29,7 +44,6 @@ ExpertSystem::ExpertSystem(std::string fileName)
                 throw std::invalid_argument("Query line is before the initial fact line !");
             if (queryInitialized == true)
                 throw std::invalid_argument("Multiple query lines !");
-            // logic to set the query characters in the _queries TODO
             for (unsigned long i = 0; i < line.length(); i++)
             {
                 if (isspace(line[i]))
@@ -61,28 +75,84 @@ ExpertSystem::ExpertSystem(std::string fileName)
             addLineToRules(tmp_vector);
         }
     }
+    for (auto c : toInitialize)
+        _facts[c] = true;
 
     if (DEBUG)
-    {
-        for (auto it : _rules)
-        {
-            std::cout << std::endl;
-            for (auto it2 : it)
-                std::cout << it2 << std::endl;
-        }
-        std::cout << std::endl
-                  << "_facts:" << std::endl;
-        for (auto it : _facts)
-            std::cout << it.first << " is " << it.second << " ";
-        std::cout << std::endl
-                  << "_queries:" << std::endl;
-        for (auto it : _queries)
-            std::cout << it;
-        std::cout << std::endl;
-    }
+        printDebug(toInitialize);
+
+    expertLogic();
 }
 
 ExpertSystem::~ExpertSystem() {}
+
+void ExpertSystem::expertLogic()
+{
+    for (auto query : _queries)
+    {
+        std::vector<std::vector<Token>> neighbours = createQueryNeighbours(_rules, query);
+        for (auto neighbour : neighbours)
+            _facts[query] = recursiveLogic(_rules, neighbour, _facts);
+    }
+    /*
+    while (queries)
+        if (final condition (soit aucun voisin soit tous les rules explores))
+            return true or false;
+        pop le vector qu'on envoit de _rules
+        return send to neighbours (fact of current line dans les results && pas explore)
+    */
+}
+
+bool ExpertSystem::recursiveLogic(std::vector<std::vector<Token>> rules, std::vector<Token> rule, std::map<char, int> &facts)
+{
+    (void)rules;
+    (void)facts;
+    (void)rule;
+    return false;
+}
+
+std::vector<std::vector<Token>> ExpertSystem::createQueryNeighbours(std::vector<std::vector<Token>> rules, char query)
+{
+    std::vector<std::vector<Token>> neighbours;
+    for (auto rule : rules)
+    {
+        for (auto token : rule)
+            if (token.isResult == true && token.value[0] == query)
+                neighbours.push_back(rule);
+    }
+    if (DEBUG)
+    {
+        for (auto neighbour : neighbours)
+            for (auto token : neighbour)
+                std::cout << token << std::endl;
+        std::cout << std::endl;
+    }
+    return neighbours;
+}
+
+void ExpertSystem::printDebug(std::string toInitialize)
+{
+    for (auto it : _rules)
+    {
+        std::cout << std::endl;
+        for (auto it2 : it)
+            std::cout << it2 << std::endl;
+    }
+    std::cout << std::endl
+              << std::endl
+              << "_facts:" << std::endl;
+    for (auto it : _facts)
+        std::cout << it.first << " is " << it.second << " ";
+    std::cout << std::endl
+              << std::endl
+              << "_queries:" << std::endl;
+    for (auto it : _queries)
+        std::cout << it;
+    std::cout << std::endl
+              << std::endl;
+    std::cout << "Initial characters: " << std::endl
+              << toInitialize << std::endl;
+}
 
 // Parsing methods
 
@@ -159,12 +229,12 @@ void ExpertSystem::addLineToRules(std::vector<std::string> line)
     if (line.size() < 3)
         throw std::invalid_argument("A line has invalid format !");
 
-    std::vector<Rules> toRules;
+    std::vector<Token> toToken;
     bool implicatorFound = false;
 
     for (auto it : line) // still need to check multiple Operators in a row, same for characters TODO
     {
-        Rules tmp;
+        Token tmp;
         if (isupper(it[0]))
         {
             if (it.size() != 1)
@@ -223,13 +293,13 @@ void ExpertSystem::addLineToRules(std::vector<std::string> line)
         }
 
         // add a function to check if there is atleast one fact/implicator/result TODO
-        toRules.push_back(tmp);
+        toToken.push_back(tmp);
     }
-    checkLineValidity(toRules);
-    _rules.push_back(toRules);
+    checkLineValidity(toToken);
+    _rules.push_back(toToken);
 }
 
-void ExpertSystem::checkLineValidity(std::vector<Rules> toRules)
+void ExpertSystem::checkLineValidity(std::vector<Token> toToken)
 {
     bool hasFact = false;
     bool hasImplicator = false;
@@ -237,13 +307,13 @@ void ExpertSystem::checkLineValidity(std::vector<Rules> toRules)
 
     int lastWas = 0;
 
-    if (toRules.size() < 3)
+    if (toToken.size() < 3)
         throw std::invalid_argument("A line has invalid format !");
-    if (toRules[0].isFact == false || toRules[toRules.size() - 1].isResult == false)
+    if (toToken[0].isFact == false || toToken[toToken.size() - 1].isResult == false)
         throw std::invalid_argument("A line has to start with a fact and end with a result !");
-    for (unsigned long i = 0; i < toRules.size(); i++)
+    for (unsigned long i = 0; i < toToken.size(); i++)
     {
-        Rules it = toRules[i];
+        Token it = toToken[i];
         // keep track ( and ) TODO
         if (hasFact == false && it.isFact == true)
             hasFact = true;
