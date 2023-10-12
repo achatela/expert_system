@@ -12,6 +12,10 @@
 #define DEBUG 0
 #endif
 
+#define FALSE 0
+#define TRUE 1
+#define END_BRANCH 2
+
 // => is an implicator
 // ! is (not) true
 // D is the result
@@ -67,7 +71,8 @@ public:
     void checkLineValidity(std::vector<Token>);
     void printDebug(std::string);
     void expertLogic();
-    bool recursiveLogic(std::vector<std::vector<Token>>, std::vector<Token>, std::map<char, int>);
+    int recursiveLogic(std::vector<std::vector<Token>>, std::vector<Token>, std::map<char, int>);
     std::vector<std::vector<Token>> createQueryNeighbours(std::vector<std::vector<Token>>, char);
-    std::vector<std::vector<Token>> createNeighbours(std::vector<std::vector<Token>>, std::vector<Token> &, std::vector<Token>);
+    std::vector<std::vector<Token>> createNeighbours(std::vector<std::vector<Token>>, std::vector<Token> &, std::vector<Token>, char &);
+    int checkCondition(std::vector<Token>, std::map<char, int> &);
 };

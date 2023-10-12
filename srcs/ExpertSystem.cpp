@@ -93,8 +93,16 @@ void ExpertSystem::expertLogic()
         std::vector<std::vector<Token>> neighbours = createQueryNeighbours(_rules, query);
         for (auto neighbour : neighbours)
         {
-            _facts[query] = recursiveLogic(_rules, neighbour, _facts);
+            auto facts = _facts;
+            int tmp = recursiveLogic(_rules, neighbour, facts);
+            if (tmp == TRUE)
+                _facts[query] = true;
         }
+        for (auto fact : _facts)
+        {
+            std::cout << fact.first << " is " << fact.second << std::endl;
+        }
+        std::cout << std::endl;
     }
     /*
     while (queries)
@@ -105,35 +113,43 @@ void ExpertSystem::expertLogic()
     */
 }
 
-bool ExpertSystem::recursiveLogic(std::vector<std::vector<Token>> rules, std::vector<Token> rule, std::map<char, int> facts)
+int ExpertSystem::recursiveLogic(std::vector<std::vector<Token>> rules, std::vector<Token> rule, std::map<char, int> facts)
 {
-    std::cout << "Received: " << std::endl;
-    for (auto val : rule)
-        std::cout << val << std::endl;
-    std::cout << std::endl;
-    (void)facts;
-    if (rules.empty() || rule.empty()) // || no rule found )
-        return true;                   // function to check if path is true or false TODO
+    if (rules.empty() || rule.empty())
+        return END_BRANCH;
     std::vector<Token> nextNeighbour;
-    rules = createNeighbours(rules, nextNeighbour, rule);
+    char checkCharacter = 0;
+    rules = createNeighbours(rules, nextNeighbour, rule, checkCharacter);
+    int branchResult;
+    if (nextNeighbour.empty())
+        return END_BRANCH;
     while (!nextNeighbour.empty())
     {
-        if (DEBUG)
+        branchResult = recursiveLogic(rules, nextNeighbour, facts);
+        if (branchResult != END_BRANCH)
         {
-            std::cout << "nextNeighbour" << std::endl;
-            for (auto val : nextNeighbour)
-                std::cout << val << " " << std::endl;
-            std::cout << "end nextNeighbour" << std::endl;
+            if (facts[checkCharacter] == true && branchResult == FALSE)
+                std::invalid_argument("Contradiction found !");
+            facts[checkCharacter] = branchResult;
         }
-        recursiveLogic(rules, nextNeighbour, facts);
-        rules = createNeighbours(rules, nextNeighbour, rule);
+        rules = createNeighbours(rules, nextNeighbour, rule, checkCharacter);
+        std::cout << std::endl;
     }
-    return false;
+    return checkCondition(rule, facts);
 }
 
-std::vector<std::vector<Token>> ExpertSystem::createNeighbours(std::vector<std::vector<Token>> rules, std::vector<Token> &nextNeighbour, std::vector<Token> rule)
+int ExpertSystem::checkCondition(std::vector<Token> rule, std::map<char, int> &facts)
+{
+    (void)rule;
+    (void)facts;
+    std::cout << "In check condition" << std::endl;
+    return TRUE;
+};
+
+std::vector<std::vector<Token>> ExpertSystem::createNeighbours(std::vector<std::vector<Token>> rules, std::vector<Token> &nextNeighbour, std::vector<Token> rule, char &character)
 {
     nextNeighbour.clear();
+    character = 0;
     std::string characters;
     for (unsigned long i = 0; rule[i].isImplicator == false; i++)
     {
@@ -152,6 +168,9 @@ std::vector<std::vector<Token>> ExpertSystem::createNeighbours(std::vector<std::
             {
                 if (characters.find(rules[j][k].value) != std::string::npos)
                 {
+                    character = rules[j][k].value[0];
+                    if (rules[j][k].value[0] == '!')
+                        character = rules[j][k].value[1];
                     nextNeighbour = rules[j];
                     rules.erase(rules.begin() + j);
                     break;
