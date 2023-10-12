@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <list>
 #include <string>
 #include <map>
 #include <iostream>
@@ -48,6 +49,22 @@ struct Token
         return os;
     }
 };
+
+//(A | B) + (D | C)
+//AB|DC|+
+//A | (B + C) + D + (E | F)
+//BC+D+EF|A|
+//A + (B | C) + D | (E + F)
+//BC|A+D+EF+|
+//(A + B) | (C + D)
+//AB+CD+|
+//(A + B) | (C + D) + (E | F)
+//(A + B) | + (E | F) = CD+
+//(A + B) | + = CD+EF|
+//(A + B) | = CD+EF|+
+//| = CD+EF|+AB+
+//CD+EF|+AB+|
+
 
 class ExpertSystem
 {
