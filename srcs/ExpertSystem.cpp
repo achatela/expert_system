@@ -78,8 +78,8 @@ ExpertSystem::ExpertSystem(std::string fileName)
     for (auto c : toInitialize)
         _facts[c] = true;
 
-    if (DEBUG)
-        printDebug(toInitialize);
+    // if (DEBUG)
+    //     printDebug(toInitialize);
 
     expertLogic();
 }
@@ -92,7 +92,9 @@ void ExpertSystem::expertLogic()
     {
         std::vector<std::vector<Token>> neighbours = createQueryNeighbours(_rules, query);
         for (auto neighbour : neighbours)
+        {
             _facts[query] = recursiveLogic(_rules, neighbour, _facts);
+        }
     }
     /*
     while (queries)
@@ -103,12 +105,61 @@ void ExpertSystem::expertLogic()
     */
 }
 
-bool ExpertSystem::recursiveLogic(std::vector<std::vector<Token>> rules, std::vector<Token> rule, std::map<char, int> &facts)
+bool ExpertSystem::recursiveLogic(std::vector<std::vector<Token>> rules, std::vector<Token> rule, std::map<char, int> facts)
 {
-    (void)rules;
+    std::cout << "Received: " << std::endl;
+    for (auto val : rule)
+        std::cout << val << std::endl;
+    std::cout << std::endl;
     (void)facts;
-    (void)rule;
+    if (rules.empty() || rule.empty()) // || no rule found )
+        return true;                   // function to check if path is true or false TODO
+    std::vector<Token> nextNeighbour;
+    rules = createNeighbours(rules, nextNeighbour, rule);
+    while (!nextNeighbour.empty())
+    {
+        if (DEBUG)
+        {
+            std::cout << "nextNeighbour" << std::endl;
+            for (auto val : nextNeighbour)
+                std::cout << val << " " << std::endl;
+            std::cout << "end nextNeighbour" << std::endl;
+        }
+        recursiveLogic(rules, nextNeighbour, facts);
+        rules = createNeighbours(rules, nextNeighbour, rule);
+    }
     return false;
+}
+
+std::vector<std::vector<Token>> ExpertSystem::createNeighbours(std::vector<std::vector<Token>> rules, std::vector<Token> &nextNeighbour, std::vector<Token> rule)
+{
+    nextNeighbour.clear();
+    std::string characters;
+    for (unsigned long i = 0; rule[i].isImplicator == false; i++)
+    {
+        if (rule[i].isFact == true)
+        {
+            characters += rule[i].value;
+            break;
+        }
+    }
+
+    for (unsigned long j = 0; j < rules.size(); j++)
+    {
+        for (unsigned long k = rules[j].size() - 1; rules[j][k].isImplicator == false; k--)
+        {
+            if (rules[j][k].isResult == true)
+            {
+                if (characters.find(rules[j][k].value) != std::string::npos)
+                {
+                    nextNeighbour = rules[j];
+                    rules.erase(rules.begin() + j);
+                    break;
+                }
+            }
+        }
+    }
+    return rules;
 }
 
 std::vector<std::vector<Token>> ExpertSystem::createQueryNeighbours(std::vector<std::vector<Token>> rules, char query)
@@ -117,16 +168,19 @@ std::vector<std::vector<Token>> ExpertSystem::createQueryNeighbours(std::vector<
     for (auto rule : rules)
     {
         for (auto token : rule)
-            if (token.isResult == true && token.value[0] == query)
+            if (token.isResult == true && (token.value[0] == query)) // || (token.value.size() == 2 && token.value[1] == query))) pas sur
+            {
                 neighbours.push_back(rule);
+                break;
+            }
     }
-    if (DEBUG)
-    {
-        for (auto neighbour : neighbours)
-            for (auto token : neighbour)
-                std::cout << token << std::endl;
-        std::cout << std::endl;
-    }
+    // if (DEBUG)
+    // {
+    //     for (auto neighbour : neighbours)
+    //         for (auto token : neighbour)
+    //             std::cout << token << std::endl;
+    //     std::cout << std::endl;
+    // }
     return neighbours;
 }
 

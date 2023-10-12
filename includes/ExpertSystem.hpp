@@ -67,6 +67,7 @@ public:
     void checkLineValidity(std::vector<Token>);
     void printDebug(std::string);
     void expertLogic();
-    bool recursiveLogic(std::vector<std::vector<Token>>, std::vector<Token>, std::map<char, int> &);
+    bool recursiveLogic(std::vector<std::vector<Token>>, std::vector<Token>, std::map<char, int>);
     std::vector<std::vector<Token>> createQueryNeighbours(std::vector<std::vector<Token>>, char);
+    std::vector<std::vector<Token>> createNeighbours(std::vector<std::vector<Token>>, std::vector<Token> &, std::vector<Token>);
 };
