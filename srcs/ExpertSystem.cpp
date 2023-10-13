@@ -4,6 +4,22 @@
 
 ExpertSystem::ExpertSystem(std::string fileName)
 {
+    // std::vector<std::string> line;
+    // std::string token;
+    // for (unsigned long i = 0; i < fileName.size(); i++) {
+    //     if (fileName[i] == ' ') {
+    //         line.push_back(token);
+    //         token = std::string();
+    //         continue;
+    //     }
+    //     token.push_back(fileName[i]);
+    // }
+    // line.push_back(token);
+    // auto rpn = getRPN(line);
+    // for (auto token : rpn)
+    //     std::cout << token << " ";
+    // std::cout << std::endl;
+    // exit(0);
     if (fileName.length() < 4)
         throw std::invalid_argument("File name is too short !");
     if (fileName[fileName.length() - 1] != 't' && fileName[fileName.length() - 2] != 'x' && fileName[fileName.length() - 3] != 't' && fileName[fileName.length() - 4] != '.')
@@ -295,28 +311,39 @@ bool ExpertSystem::isInitialFact(std::string line) const
     return (true);
 }
 
-//
-std::string reversePolishNotation(std::vector<std::string> line) {
-    std::list<std::string> operators = {"+", "|", "^"};
-    for (auto op : operators) {
-        for (int i = 0; i < line.size(); i++) {
-            if (line[i] == op) {
-                std::vector<std::string> first;
-                if (line[i - 1] == ")")
-                    for (int j = i - 1; line[j - 1] != "(";)
-                        first.insert(first.begin(), line[--j]);
-                else
-                    first.insert(first.begin(), line[i - 1]);
-                std::vector<std::string> second;
-                if (line[i + 1] == "(")
-                    for (int j = 0; line[j + 1] != ")";)
-                        first.insert(first.begin(), line[++j]);
-                else
-                    first.insert(first.begin(), line[i + 1]);
-                //...
-            }
+std::vector<std::string> ExpertSystem::getRPN(std::vector<std::string> line) {
+    std::stack<std::string> operatorStack;
+    std::vector<std::string> rpn;
+    for (auto token = line.begin(); token != line.end(); token++) {
+        if (*token == "(") {
+            std::vector<std::string> subLine;
+            while (*++token != ")")
+                subLine.push_back(*token);
+            auto subRPN = getRPN(subLine);
+            rpn.insert(rpn.end(), subRPN.begin(), subRPN.end());
+            continue;
         }
+        auto operatorPriority = _operatorPriorities.find(*token);
+        if (operatorPriority != _operatorPriorities.end()) {
+            while (!operatorStack.empty()) {
+                auto lastOperatorPriority = _operatorPriorities.find(operatorStack.top());
+                if (lastOperatorPriority->second <= operatorPriority->second) {
+                    rpn.push_back(lastOperatorPriority->first);
+                    operatorStack.pop();
+                }
+                else
+                    break;
+            }
+            operatorStack.push(*token);
+        }
+        else
+            rpn.push_back(*token);
     }
+    while (!operatorStack.empty()) {
+        rpn.push_back(operatorStack.top());
+        operatorStack.pop();
+    }
+    return rpn;
 }
 
 void ExpertSystem::addLineToRules(std::vector<std::string> line)

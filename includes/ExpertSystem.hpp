@@ -1,6 +1,8 @@
 #pragma once
-#include <vector>
 #include <list>
+#include <vector>
+#include <set>
+#include <stack>
 #include <string>
 #include <map>
 #include <iostream>
@@ -20,6 +22,7 @@
 // => is an implicator
 // ! is (not) true
 // D is the result
+
 struct Token
 {
     bool isFact = false;       // A B C... are facts
@@ -50,28 +53,13 @@ struct Token
     }
 };
 
-//(A | B) + (D | C)
-//AB|DC|+
-//A | (B + C) + D + (E | F)
-//BC+D+EF|A|
-//A + (B | C) + D | (E + F)
-//BC|A+D+EF+|
-//(A + B) | (C + D)
-//AB+CD+|
-//(A + B) | (C + D) + (E | F)
-//(A + B) | + (E | F) = CD+
-//(A + B) | + = CD+EF|
-//(A + B) | = CD+EF|+
-//| = CD+EF|+AB+
-//CD+EF|+AB+|
-
-
 class ExpertSystem
 {
 private:
     std::vector<std::vector<Token>> _rules;
     std::map<char, int> _facts;
     std::vector<char> _queries;
+    std::map<std::string, int> _operatorPriorities = {std::pair<std::string, int>("+", 1), std::pair<std::string, int>("|", 2), std::pair<std::string, int>("^", 3)};
 
 public:
     // Constructors/Destructors
@@ -86,6 +74,7 @@ public:
     //
     void addLineToRules(std::vector<std::string>);
     void checkLineValidity(std::vector<Token>);
+    std::vector<std::string> getRPN(std::vector<std::string>);
     void printDebug(std::string);
     void expertLogic();
     int recursiveLogic(std::vector<std::vector<Token>>, std::vector<Token>, std::map<char, int>);
