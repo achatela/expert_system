@@ -74,7 +74,7 @@ public:
     //
     void addLineToRules(std::vector<std::string>);
     void checkLineValidity(std::vector<Token>);
-    std::vector<std::string> getRPN(std::vector<std::string>);
+    std::list<std::string> getRPN(std::list<std::string>);
     void printDebug(std::string);
     void expertLogic();
     int recursiveLogic(std::vector<std::vector<Token>>, std::vector<Token>, std::map<char, int>);

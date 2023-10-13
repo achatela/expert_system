@@ -4,7 +4,7 @@
 
 ExpertSystem::ExpertSystem(std::string fileName)
 {
-    // std::vector<std::string> line;
+    // std::list<std::string> line;
     // std::string token;
     // for (unsigned long i = 0; i < fileName.size(); i++) {
     //     if (fileName[i] == ' ') {
@@ -311,14 +311,19 @@ bool ExpertSystem::isInitialFact(std::string line) const
     return (true);
 }
 
-std::vector<std::string> ExpertSystem::getRPN(std::vector<std::string> line) {
+std::list<std::string> ExpertSystem::getRPN(std::list<std::string> line) {
+    std::list<std::string> rpn;
     std::stack<std::string> operatorStack;
-    std::vector<std::string> rpn;
     for (auto token = line.begin(); token != line.end(); token++) {
         if (*token == "(") {
-            std::vector<std::string> subLine;
-            while (*++token != ")")
+            std::list<std::string> subLine;
+            for (int openCount = 0; *++token != ")" || openCount;) {
+                if (*token == "(")
+                    openCount++;
+                else if (*token == ")")
+                    openCount--;
                 subLine.push_back(*token);
+            }
             auto subRPN = getRPN(subLine);
             rpn.insert(rpn.end(), subRPN.begin(), subRPN.end());
             continue;
