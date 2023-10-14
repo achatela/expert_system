@@ -64,14 +64,14 @@ ExpertSystem::ExpertSystem(std::string fileName)
         else // lines with facts
             addRule(line);
     }
+
     // for (auto rule : _rules) {
     //     for (auto token : rule)
     //         std::cout << token.value << " ";
     //     std::cout << std::endl;
     // }
-    // exit(0);
-    for (auto c : toInitialize)
-        _facts[c] = true;
+    // for (auto c : toInitialize)
+    //     _facts[c] = true;
 
     // if (DEBUG)
     //     printDebug(toInitialize);
@@ -297,19 +297,20 @@ void ExpertSystem::addRule(std::string line) {
     for (unsigned long i = 0; i < line.size() && line[i] != '#'; i++) {
         if (line[i] == ' ')
             continue;
-        if (line[i] == '(' || line[i] == ')') {
-            if (line[i] == '(') {
-                if (!rule.empty() && rule.back().isFact)
-                    throw std::invalid_argument("A line has invalid format !");
-                openCount++;
-            } else {
-                if ((!rule.empty() && !rule.back().isFact && rule.back().value != ")") || !openCount)
-                    throw std::invalid_argument("A line has invalid format !");
-                openCount--;
-            }
+        if (line[i] == '(') {
+            if (!rule.empty() && rule.back().isFact)
+                throw std::invalid_argument("A line has invalid format !");
             Token token;
             token.value = line[i];
             rule.push_back(token);
+            openCount++;
+        } else if (line[i] == ')') {
+            if ((!rule.empty() && !rule.back().isFact && rule.back().value != ")") || !openCount)
+                throw std::invalid_argument("A line has invalid format !");
+            Token token;
+            token.value = line[i];
+            rule.push_back(token);
+            openCount--;
         } else if (line[i] > 64 && line[i] < 91) {
             if (!rule.empty() && rule.back().value == ")")
                 throw std::invalid_argument("A line has invalid format !");
@@ -332,27 +333,24 @@ void ExpertSystem::addRule(std::string line) {
             token.isOperator = true;
             token.value = line[i];
             rule.push_back(token);
-        } else if (line[i] == '=' || line[i] == '<') {
-            if (line[i] == '=' && line[i + 1] == '>') {
-                if (rule.empty() || rule.back().isImplicator || rule.back().value == "(" || implicatorFound)
-                    throw std::invalid_argument("A line has invalid format !");
-                Token token;
-                token.isImplicator = true;
-                token.value = "=>";
-                rule.push_back(token);
-                implicatorFound = true;
-                i++;
-            } else if (line[i] == '<' && line[i + 1] == '=' && line[i + 2] == '>') {
-                if (rule.empty() || rule.back().isImplicator || rule.back().value == "(" || implicatorFound)
-                    throw std::invalid_argument("A line has invalid format !");
-                Token token;
-                token.isImplicator = true;
-                token.value = "<=>";
-                rule.push_back(token);
-                implicatorFound = true;
-                i += 2;
-            } else
+        } else if (line[i] == '=' && line[i + 1] == '>') {
+            if (rule.empty() || rule.back().isImplicator || rule.back().value == "(" || implicatorFound)
                 throw std::invalid_argument("A line has invalid format !");
+            Token token;
+            token.isImplicator = true;
+            token.value = "=>";
+            rule.push_back(token);
+            implicatorFound = true;
+            i++;
+        } else if (line[i] == '<' && line[i + 1] == '=' && line[i + 2] == '>') {
+            if (rule.empty() || rule.back().isImplicator || rule.back().value == "(" || implicatorFound)
+                throw std::invalid_argument("A line has invalid format !");
+            Token token;
+            token.isImplicator = true;
+            token.value = "<=>";
+            rule.push_back(token);
+            implicatorFound = true;
+            i += 2;
         } else
             throw std::invalid_argument("A line has invalid format !");
     }
