@@ -70,8 +70,9 @@ ExpertSystem::ExpertSystem(std::string fileName)
     //         std::cout << token.value << " ";
     //     std::cout << std::endl;
     // }
-    // for (auto c : toInitialize)
-    //     _facts[c] = true;
+
+    for (auto c : toInitialize)
+        _facts[c] = true;
 
     // if (DEBUG)
     //     printDebug(toInitialize);
