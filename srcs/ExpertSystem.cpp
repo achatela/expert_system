@@ -4,22 +4,6 @@
 
 ExpertSystem::ExpertSystem(std::string fileName)
 {
-    // std::list<std::string> line;
-    // std::string token;
-    // for (unsigned long i = 0; i < fileName.size(); i++) {
-    //     if (fileName[i] == ' ') {
-    //         line.push_back(token);
-    //         token = std::string();
-    //         continue;
-    //     }
-    //     token.push_back(fileName[i]);
-    // }
-    // line.push_back(token);
-    // auto rpn = getRPN(line);
-    // for (auto token : rpn)
-    //     std::cout << token << " ";
-    // std::cout << std::endl;
-    // exit(0);
     if (fileName.length() < 4)
         throw std::invalid_argument("File name is too short !");
     if (fileName[fileName.length() - 1] != 't' && fileName[fileName.length() - 2] != 'x' && fileName[fileName.length() - 3] != 't' && fileName[fileName.length() - 4] != '.')
@@ -78,19 +62,14 @@ ExpertSystem::ExpertSystem(std::string fileName)
             queryInitialized = true;
         }
         else // lines with facts
-        {
-            std::stringstream ss(line);
-            std::string word;
-            std::vector<std::string> tmp_vector;
-            while (ss >> word)
-            {
-                if (word[0] == '#')
-                    break;
-                tmp_vector.push_back(word);
-            }
-            addLineToRules(tmp_vector);
-        }
+            addRule(line);
     }
+    // for (auto rule : _rules) {
+    //     for (auto token : rule)
+    //         std::cout << token.value << " ";
+    //     std::cout << std::endl;
+    // }
+    // exit(0);
     for (auto c : toInitialize)
         _facts[c] = true;
 
@@ -311,166 +290,104 @@ bool ExpertSystem::isInitialFact(std::string line) const
     return (true);
 }
 
-std::list<std::string> ExpertSystem::getRPN(std::list<std::string> line) {
-    std::list<std::string> rpn;
-    std::stack<std::string> operatorStack;
-    for (auto token = line.begin(); token != line.end(); token++) {
-        if (*token == "(") {
-            std::list<std::string> subLine;
-            for (int openCount = 0; *++token != ")" || openCount;) {
-                if (*token == "(")
-                    openCount++;
-                else if (*token == ")")
-                    openCount--;
-                subLine.push_back(*token);
-            }
-            auto subRPN = getRPN(subLine);
-            rpn.insert(rpn.end(), subRPN.begin(), subRPN.end());
-            continue;
-        }
-        auto operatorPriority = _operatorPriorities.find(*token);
-        if (operatorPriority != _operatorPriorities.end()) {
-            while (!operatorStack.empty()) {
-                auto lastOperatorPriority = _operatorPriorities.find(operatorStack.top());
-                if (lastOperatorPriority->second <= operatorPriority->second) {
-                    rpn.push_back(lastOperatorPriority->first);
-                    operatorStack.pop();
-                }
-                else
-                    break;
-            }
-            operatorStack.push(*token);
-        }
-        else
-            rpn.push_back(*token);
-    }
-    while (!operatorStack.empty()) {
-        rpn.push_back(operatorStack.top());
-        operatorStack.pop();
-    }
-    return rpn;
-}
-
-void ExpertSystem::addLineToRules(std::vector<std::string> line)
-{
-    if (line.size() < 3)
-        throw std::invalid_argument("A line has invalid format !");
-
-    std::vector<Token> toToken;
+void ExpertSystem::addRule(std::string line) {
+    std::vector<Token> rule;
     bool implicatorFound = false;
-
-    for (auto it : line) // still need to check multiple Operators in a row, same for characters TODO
-    {
-        Token tmp;
-        if (isupper(it[0]))
-        {
-            if (it.size() != 1)
+    int openCount = 0;
+    for (unsigned long i = 0; i < line.size() && line[i] != '#'; i++) {
+        if (line[i] == ' ')
+            continue;
+        if (line[i] == '(' || line[i] == ')') {
+            if (line[i] == '(') {
+                if (!rule.empty() && rule.back().isFact)
+                    throw std::invalid_argument("A line has invalid format !");
+                openCount++;
+            } else {
+                if ((!rule.empty() && !rule.back().isFact && rule.back().value != ")") || !openCount)
+                    throw std::invalid_argument("A line has invalid format !");
+                openCount--;
+            }
+            Token token;
+            token.value = line[i];
+            rule.push_back(token);
+        } else if (line[i] > 64 && line[i] < 91) {
+            if (!rule.empty() && rule.back().value == ")")
                 throw std::invalid_argument("A line has invalid format !");
-            if (implicatorFound == false)
-            {
-                tmp.isFact = true;
-                tmp.value = std::string(it);
-                _facts[it[0]] = false;
-            }
-            else
-            {
-                tmp.isResult = true;
-                tmp.value = std::string(it);
-                _facts[it[0]] = false;
-            }
-        }
-        else if (it[0] == '!')
-        {
-            if (it.size() != 2)
+            Token token;
+            token.isFact = true;
+            token.value = line[i];
+            rule.push_back(token);
+        } else if (line[i] == '!' && line[i + 1] > 64 && line[i + 1] < 91) {
+            if (!rule.empty() && rule.back().value == ")")
                 throw std::invalid_argument("A line has invalid format !");
-            if (isupper(it[1]))
-            {
-                if (implicatorFound == false)
-                {
-                    tmp.isFact = true;
-                    tmp.isTrue = false;
-                    tmp.value = std::string(it);
-                    _facts[it[1]] = false;
-                }
-                else
-                {
-                    tmp.isResult = true;
-                    tmp.isTrue = false;
-                    tmp.value = std::string(it);
-                    _facts[it[1]] = false;
-                }
-            }
-        }
-        else if (it.size() == 1 && (it[0] == '|' || it[0] == '+' || it[0] == '^'))
-        {
-            tmp.isOperator = true;
-            tmp.value = std::string(it);
-        }
-        else if (it == "=>" || it == "<=>")
-        {
-            if (implicatorFound == true)
-                throw std::invalid_argument("A line has two implicator !");
-            tmp.isImplicator = true;
-            tmp.value = std::string(it);
-            implicatorFound = true;
-        }
-        else
-        {
+            Token token;
+            token.isFact = true;
+            token.isNot = true;
+            token.value = line[++i];
+            rule.push_back(token);
+        } else if (line[i] == '+' || line[i] == '|' || line[i] == '^') {
+            if (rule.empty() || rule.back().isImplicator || rule.back().value == "(")
+                throw std::invalid_argument("A line has invalid format !");
+            Token token;
+            token.isOperator = true;
+            token.value = line[i];
+            rule.push_back(token);
+        } else if (line[i] == '=' || line[i] == '<') {
+            if (line[i] == '=' && line[i + 1] == '>') {
+                if (rule.empty() || rule.back().isImplicator || rule.back().value == "(" || implicatorFound)
+                    throw std::invalid_argument("A line has invalid format !");
+                Token token;
+                token.isImplicator = true;
+                token.value = "=>";
+                rule.push_back(token);
+                implicatorFound = true;
+                i++;
+            } else if (line[i] == '<' && line[i + 1] == '=' && line[i + 2] == '>') {
+                if (rule.empty() || rule.back().isImplicator || rule.back().value == "(" || implicatorFound)
+                    throw std::invalid_argument("A line has invalid format !");
+                Token token;
+                token.isImplicator = true;
+                token.value = "<=>";
+                rule.push_back(token);
+                implicatorFound = true;
+                i += 2;
+            } else
+                throw std::invalid_argument("A line has invalid format !");
+        } else
             throw std::invalid_argument("A line has invalid format !");
-        }
-
-        // add a function to check if there is atleast one fact/implicator/result TODO
-        toToken.push_back(tmp);
     }
-    checkLineValidity(toToken);
-    _rules.push_back(toToken);
+    if (openCount)
+        throw std::invalid_argument("A line has invalid format !");
+    _rules.push_back(makeRpnRule(rule));
 }
 
-void ExpertSystem::checkLineValidity(std::vector<Token> toToken)
-{
-    bool hasFact = false;
-    bool hasImplicator = false;
-    bool hasResult = false;
-
-    int lastWas = 0;
-
-    if (toToken.size() < 3)
-        throw std::invalid_argument("A line has invalid format !");
-    if (toToken[0].isFact == false || toToken[toToken.size() - 1].isResult == false)
-        throw std::invalid_argument("A line has to start with a fact and end with a result !");
-    for (unsigned long i = 0; i < toToken.size(); i++)
-    {
-        Token it = toToken[i];
-        // keep track ( and ) TODO
-        if (hasFact == false && it.isFact == true)
-            hasFact = true;
-        else if (hasImplicator == false && it.isImplicator == true)
-            hasImplicator = true;
-        else if (hasResult == false && it.isResult == true)
-            hasResult = true;
-        if (it.isFact == true)
-        {
-            if (lastWas == 1)
-                throw std::invalid_argument("Two fact in a row !");
-            lastWas = 1;
-        }
-        else if (it.isOperator == true)
-        {
-            if (lastWas == 2)
-                throw std::invalid_argument("Two operators in a row !");
-            lastWas = 2;
-        }
-        else if (it.isResult == true)
-        {
-            if (lastWas == 3)
-                throw std::invalid_argument("Two results in a row !");
-            lastWas = 3;
-        }
-        else
-        {
-            lastWas = 0;
+std::vector<Token> ExpertSystem::makeRpnRule(std::vector<Token> rule) {
+    std::vector<Token> rpnRule;
+    std::stack<Token> operatorStack;
+    for (auto token = rule.begin(); token != rule.end(); token++) {
+        if (token->isFact) {
+            rpnRule.push_back(*token);
+        } else if (token->isOperator) {
+            for (auto priority = _priorities.find(token->value); !operatorStack.empty() && _priorities.find(operatorStack.top().value)->second <= priority->second; operatorStack.pop())
+                rpnRule.push_back(operatorStack.top());
+            operatorStack.push(*token);
+        } else if (token->isImplicator) {
+            for (;!operatorStack.empty(); operatorStack.pop())
+               rpnRule.push_back(operatorStack.top());
+            rpnRule.push_back(*token);
+        } else {
+            std::vector<Token> subRule;
+            for (int openCount = 0; (++token)->value != ")" || openCount; subRule.push_back(*token)) {
+                if (token->value == "(")
+                    openCount++;
+                else if (token->value == ")")
+                    openCount--;
+            }
+            std::vector<Token> subRpnRule = makeRpnRule(subRule);
+            rpnRule.insert(rpnRule.end(), subRpnRule.begin(), subRpnRule.end());
         }
     }
-    if (hasFact != true || hasImplicator != true || hasResult != true)
-        throw std::invalid_argument("Every line needs at least one fact, implicator, and argument !");
+    for (;!operatorStack.empty(); operatorStack.pop())
+        rpnRule.push_back(operatorStack.top());
+    return rpnRule;
 }

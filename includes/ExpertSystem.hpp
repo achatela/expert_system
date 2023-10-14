@@ -29,7 +29,7 @@ struct Token
     bool isOperator = false;   // + | ^ are operators
     bool isImplicator = false; // => <=> are implicators
     bool isResult = false;     // characters after implicator = result
-    bool isTrue = true;        // ! is (not) true
+    bool isNot = false;        // ! is (not) true
     std::string value;
 
     friend std::ostream &operator<<(std::ostream &os, const Token &rules)
@@ -44,8 +44,8 @@ struct Token
             os << "is an implicator ";
         if (rules.isResult)
             os << "is a result ";
-        if (rules.isTrue)
-            os << " and is true ";
+        if (rules.isNot)
+            os << " and is not ";
         else
             os << " and is false ";
 
@@ -59,7 +59,7 @@ private:
     std::vector<std::vector<Token>> _rules;
     std::map<char, int> _facts;
     std::vector<char> _queries;
-    std::map<std::string, int> _operatorPriorities = {std::pair<std::string, int>("+", 1), std::pair<std::string, int>("|", 2), std::pair<std::string, int>("^", 3)};
+    std::map<std::string, int> _priorities = {std::pair<std::string, int>("+", 1), std::pair<std::string, int>("|", 2), std::pair<std::string, int>("^", 3)};
 
 public:
     // Constructors/Destructors
@@ -72,9 +72,8 @@ public:
     bool isQuery(std::string) const;
 
     //
-    void addLineToRules(std::vector<std::string>);
-    void checkLineValidity(std::vector<Token>);
-    std::list<std::string> getRPN(std::list<std::string>);
+    void addRule(std::string);
+    std::vector<Token> makeRpnRule(std::vector<Token>);
     void printDebug(std::string);
     void expertLogic();
     int recursiveLogic(std::vector<std::vector<Token>>, std::vector<Token>, std::map<char, int>);
