@@ -150,17 +150,13 @@ int ExpertSystem::checkCondition(std::vector<Token> rule, std::map<char, int> &f
         {
             if (rule[i].isNot == true)
             {
-                if (facts[rule[i].value[0]] == FALSE)
-                    ruleFacts.push_back("true");
-                else
-                    ruleFacts.push_back("false");
+                std::string toPush = facts[rule[i].value[0]] == FALSE ? "true" : "false";
+                ruleFacts.push_back(toPush);
             }
             else
             {
-                if (facts[rule[i].value[0]] == TRUE)
-                    ruleFacts.push_back("true");
-                else
-                    ruleFacts.push_back("false");
+                std::string toPush = facts[rule[i].value[0]] == TRUE ? "true" : "false";
+                ruleFacts.push_back(toPush);
             }
         }
         else
@@ -216,10 +212,8 @@ int ExpertSystem::checkCondition(std::vector<Token> rule, std::map<char, int> &f
             break;
         auto it2 = ruleFacts.begin();
         std::advance(it2, j - 1);
-        if (resultOperation == true)
-            ruleFacts.insert(it2, "true");
-        else
-            ruleFacts.insert(it2, "false");
+        std::string toInsert = resultOperation == true ? "true" : "false";
+        ruleFacts.insert(it2, toInsert);
     }
     if (resultOperation == false)
         return FALSE;
