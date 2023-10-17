@@ -90,6 +90,7 @@ void ExpertSystem::expertLogic()
         for (auto neighbour : neighbours)
         {
             auto facts = _facts;
+            std::cout << "sent to recursive logic" << std::endl;
             int tmp = recursiveLogic(_rules, neighbour, facts);
             if (tmp == TRUE)
                 _facts[query] = true;
@@ -100,13 +101,6 @@ void ExpertSystem::expertLogic()
         }
         std::cout << std::endl;
     }
-    /*
-    while (queries)
-        if (final condition (soit aucun voisin soit tous les rules explores))
-            return true or false;
-        pop le vector qu'on envoit de _rules
-        return send to neighbours (fact of current line dans les results && pas explore)
-    */
 }
 
 int ExpertSystem::recursiveLogic(std::vector<std::vector<Token>> rules, std::vector<Token> rule, std::map<char, int> facts)
@@ -119,6 +113,7 @@ int ExpertSystem::recursiveLogic(std::vector<std::vector<Token>> rules, std::vec
     int branchResult;
     if (nextNeighbour.empty())
         return END_BRANCH;
+    std::cout << "avant while loop" << std::endl;
     while (!nextNeighbour.empty())
     {
         branchResult = recursiveLogic(rules, nextNeighbour, facts);
@@ -131,14 +126,39 @@ int ExpertSystem::recursiveLogic(std::vector<std::vector<Token>> rules, std::vec
         rules = createNeighbours(rules, nextNeighbour, rule, checkCharacter);
         std::cout << std::endl;
     }
+    std::cout << "Avant check condition" << std::endl;
     return checkCondition(rule, facts);
 }
 
 int ExpertSystem::checkCondition(std::vector<Token> rule, std::map<char, int> &facts)
 {
-    (void)rule;
     (void)facts;
-    std::cout << "In check condition" << std::endl;
+    (void)rule;
+    // std::stack<std::string> conditions;
+    // std::stack<std::string> results;
+    // std::string implicator;
+    // unsigned long i = 0;
+    // unsigned long j = rule.size() - 1;
+
+    // while (rule[i++].isImplicator != false)
+    //     ;
+    // while (i >= 0)
+    //     conditions.push(rule[i--].value);
+    // while (rule[j].isImplicator == true)
+    //     conditions.push(rule[j--].value);
+
+    // std::cout << "Check conditions and result content in checkCondition" << std::endl;
+    // while (conditions.size() != 0){
+    //     std::cout << conditions.top() << std::endl;
+    //     conditions.pop();
+    // }
+    // std::cout << std::endl;
+    // while (results.size() != 0)
+    // {
+    //     std::cout << results.top() << std::endl;
+    //     results.pop();
+    // }
+    // std::cout << std::endl;
     return TRUE;
 };
 
@@ -316,14 +336,20 @@ void ExpertSystem::addRule(std::string line) {
             if (!rule.empty() && rule.back().value == ")")
                 throw std::invalid_argument("A line has invalid format !");
             Token token;
-            token.isFact = true;
+            if (implicatorFound == false)
+                token.isFact = true;
+            else
+                token.isResult = true;
             token.value = line[i];
             rule.push_back(token);
         } else if (line[i] == '!' && line[i + 1] > 64 && line[i + 1] < 91) {
             if (!rule.empty() && rule.back().value == ")")
                 throw std::invalid_argument("A line has invalid format !");
             Token token;
-            token.isFact = true;
+            if (implicatorFound == false)
+                token.isFact = true;
+            else
+                token.isResult = true;
             token.isNot = true;
             token.value = line[++i];
             rule.push_back(token);
@@ -364,7 +390,7 @@ std::vector<Token> ExpertSystem::makeRpnRule(std::vector<Token> rule) {
     std::vector<Token> rpnRule;
     std::stack<Token> operatorStack;
     for (auto token = rule.begin(); token != rule.end(); token++) {
-        if (token->isFact) {
+        if (token->isFact || token->isResult) {
             rpnRule.push_back(*token);
         } else if (token->isOperator) {
             for (auto priority = _priorities.find(token->value); !operatorStack.empty() && _priorities.find(operatorStack.top().value)->second <= priority->second; operatorStack.pop())
