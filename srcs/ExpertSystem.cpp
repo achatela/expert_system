@@ -111,7 +111,7 @@ int ExpertSystem::recursiveLogic(std::vector<std::vector<Token>> rules, std::vec
     rules = createNeighbours(rules, nextNeighbour, rule, checkCharacter);
     int branchResult;
     if (nextNeighbour.empty())
-        return END_BRANCH;
+        return checkCondition(rule, facts);
     while (!nextNeighbour.empty())
     {
         branchResult = recursiveLogic(rules, nextNeighbour, facts);
@@ -131,13 +131,13 @@ int ExpertSystem::checkCondition(std::vector<Token> rule, std::map<char, int> &f
 {
     (void)facts;
     (void)rule;
-    if (DEBUG)
-    {
-        std::cout << "rule looks like that :" << std::endl;
-        for (auto it : rule)
-            std::cout << it.value << std::endl;
-        std::cout << std::endl;
-    }
+    // if (DEBUG)
+    // {
+    //     std::cout << "rule looks like that :" << std::endl;
+    //     for (auto it : rule)
+    //         std::cout << it.value << std::endl;
+    //     std::cout << std::endl;
+    // }
     bool resultOperation = false;
     unsigned long i = 0;
     std::list<std::string> ruleFacts;
@@ -172,10 +172,6 @@ int ExpertSystem::checkCondition(std::vector<Token> rule, std::map<char, int> &f
             if (it.second == TRUE)
                 std::cout << it.first;
         }
-        std::cout << std::endl;
-        std::cout << "ruleFacts:" << std::endl;
-        for (auto val : ruleFacts)
-            std::cout << val << std::endl;
         std::cout << std::endl;
     }
 
@@ -224,11 +220,9 @@ int ExpertSystem::checkCondition(std::vector<Token> rule, std::map<char, int> &f
         while (i < rule.size())
         {
             if (rule[i].isResult == true)
-                _facts[rule[i].value[0]] = true;
+                facts[rule[i].value[0]] = true;
             i++;
-        }
-        std::cout << "conditions are true" << std::endl;
-        ; // set characters from result as true TODO
+        }; // set characters from result as true TODO
     }
     return TRUE;
 };
