@@ -10,6 +10,7 @@
 #include <fstream>
 #include <cctype>
 #include <sstream>
+#include <iterator>
 
 #ifndef DEBUG
 #define DEBUG 0
@@ -80,4 +81,5 @@ public:
     std::vector<std::vector<Token>> createQueryNeighbours(std::vector<std::vector<Token>>, char);
     std::vector<std::vector<Token>> createNeighbours(std::vector<std::vector<Token>>, std::vector<Token> &, std::vector<Token>, char &);
     int checkCondition(std::vector<Token>, std::map<char, int> &);
+    bool calculateOperation(std::string, std::string, std::string);
 };

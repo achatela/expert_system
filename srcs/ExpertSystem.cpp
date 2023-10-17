@@ -90,7 +90,6 @@ void ExpertSystem::expertLogic()
         for (auto neighbour : neighbours)
         {
             auto facts = _facts;
-            std::cout << "sent to recursive logic" << std::endl;
             int tmp = recursiveLogic(_rules, neighbour, facts);
             if (tmp == TRUE)
                 _facts[query] = true;
@@ -113,7 +112,6 @@ int ExpertSystem::recursiveLogic(std::vector<std::vector<Token>> rules, std::vec
     int branchResult;
     if (nextNeighbour.empty())
         return END_BRANCH;
-    std::cout << "avant while loop" << std::endl;
     while (!nextNeighbour.empty())
     {
         branchResult = recursiveLogic(rules, nextNeighbour, facts);
@@ -126,7 +124,6 @@ int ExpertSystem::recursiveLogic(std::vector<std::vector<Token>> rules, std::vec
         rules = createNeighbours(rules, nextNeighbour, rule, checkCharacter);
         std::cout << std::endl;
     }
-    std::cout << "Avant check condition" << std::endl;
     return checkCondition(rule, facts);
 }
 
@@ -134,33 +131,112 @@ int ExpertSystem::checkCondition(std::vector<Token> rule, std::map<char, int> &f
 {
     (void)facts;
     (void)rule;
-    // std::stack<std::string> conditions;
-    // std::stack<std::string> results;
-    // std::string implicator;
-    // unsigned long i = 0;
-    // unsigned long j = rule.size() - 1;
+    if (DEBUG)
+    {
+        std::cout << "rule looks like that :" << std::endl;
+        for (auto it : rule)
+            std::cout << it.value << std::endl;
+        std::cout << std::endl;
+    }
+    bool resultOperation = false;
+    unsigned long i = 0;
+    std::list<std::string> ruleFacts;
 
-    // while (rule[i++].isImplicator != false)
-    //     ;
-    // while (i >= 0)
-    //     conditions.push(rule[i--].value);
-    // while (rule[j].isImplicator == true)
-    //     conditions.push(rule[j--].value);
+    while (i < rule.size())
+    {
+        if (rule[i].isImplicator == true)
+            break;
+        if (rule[i].isOperator == false)
+        {
+            if (rule[i].isNot == true)
+            {
+                if (facts[rule[i].value[0]] == FALSE)
+                    ruleFacts.push_back("true");
+                else
+                    ruleFacts.push_back("false");
+            }
+            else
+            {
+                if (facts[rule[i].value[0]] == TRUE)
+                    ruleFacts.push_back("true");
+                else
+                    ruleFacts.push_back("false");
+            }
+        }
+        else
+            ruleFacts.push_back(rule[i].value);
+        i++;
+    }
 
-    // std::cout << "Check conditions and result content in checkCondition" << std::endl;
-    // while (conditions.size() != 0){
-    //     std::cout << conditions.top() << std::endl;
-    //     conditions.pop();
-    // }
-    // std::cout << std::endl;
-    // while (results.size() != 0)
-    // {
-    //     std::cout << results.top() << std::endl;
-    //     results.pop();
-    // }
-    // std::cout << std::endl;
+    if (DEBUG)
+    {
+        std::cout << "char in facts that are true: ";
+        for (auto it : facts)
+        {
+            if (it.second == TRUE)
+                std::cout << it.first;
+        }
+        std::cout << std::endl;
+        std::cout << "ruleFacts:" << std::endl;
+        for (auto val : ruleFacts)
+            std::cout << val << std::endl;
+        std::cout << std::endl;
+    }
+
+    if (ruleFacts.size() == 1)
+    {
+        resultOperation = false;
+        if (ruleFacts.front() == "true")
+            resultOperation = true;
+        ruleFacts.pop_front();
+    }
+
+    while (!ruleFacts.empty())
+    {
+        unsigned long j = 0;
+        auto it = ruleFacts.begin();
+        while (*it == "false" || *it == "true")
+        {
+            it++;
+            j++;
+        }
+        std::string oper = *it;
+        it--;
+        std::string second = *it;
+        it--;
+        std::string first = *it;
+        resultOperation = calculateOperation(first, second, oper);
+        for (int l = 3; l > 0; l--)
+        {
+            auto it2 = ruleFacts.begin();
+            std::advance(it2, j - 2);
+            ruleFacts.erase(it2);
+        }
+        if (ruleFacts.empty())
+            break;
+        auto it2 = ruleFacts.begin();
+        std::advance(it2, j - 1);
+        if (resultOperation == true)
+            ruleFacts.insert(it2, "true");
+        else
+            ruleFacts.insert(it2, "false");
+    }
+    if (resultOperation == false)
+        return FALSE;
+    else
+    {
+        ; // set characters from result as true TODO
+    }
     return TRUE;
 };
+
+bool ExpertSystem::calculateOperation(std::string first, std::string second, std::string oper)
+{
+    (void)first;
+    (void)second;
+    (void)oper;
+    return true;
+}
 
 std::vector<std::vector<Token>> ExpertSystem::createNeighbours(std::vector<std::vector<Token>> rules, std::vector<Token> &nextNeighbour, std::vector<Token> rule, char &character)
 {
@@ -311,28 +387,35 @@ bool ExpertSystem::isInitialFact(std::string line) const
     return (true);
 }
 
-void ExpertSystem::addRule(std::string line) {
+void ExpertSystem::addRule(std::string line)
+{
     std::vector<Token> rule;
     bool implicatorFound = false;
     int openCount = 0;
-    for (unsigned long i = 0; i < line.size() && line[i] != '#'; i++) {
+    for (unsigned long i = 0; i < line.size() && line[i] != '#'; i++)
+    {
         if (line[i] == ' ')
             continue;
-        if (line[i] == '(') {
+        if (line[i] == '(')
+        {
             if (!rule.empty() && rule.back().isFact)
                 throw std::invalid_argument("A line has invalid format !");
             Token token;
             token.value = line[i];
             rule.push_back(token);
             openCount++;
-        } else if (line[i] == ')') {
+        }
+        else if (line[i] == ')')
+        {
             if ((!rule.empty() && !rule.back().isFact && rule.back().value != ")") || !openCount)
                 throw std::invalid_argument("A line has invalid format !");
             Token token;
             token.value = line[i];
             rule.push_back(token);
             openCount--;
-        } else if (line[i] > 64 && line[i] < 91) {
+        }
+        else if (line[i] > 64 && line[i] < 91)
+        {
             if (!rule.empty() && rule.back().value == ")")
                 throw std::invalid_argument("A line has invalid format !");
             Token token;
@@ -342,7 +425,9 @@ void ExpertSystem::addRule(std::string line) {
                 token.isResult = true;
             token.value = line[i];
             rule.push_back(token);
-        } else if (line[i] == '!' && line[i + 1] > 64 && line[i + 1] < 91) {
+        }
+        else if (line[i] == '!' && line[i + 1] > 64 && line[i + 1] < 91)
+        {
             if (!rule.empty() && rule.back().value == ")")
                 throw std::invalid_argument("A line has invalid format !");
             Token token;
@@ -353,14 +438,18 @@ void ExpertSystem::addRule(std::string line) {
             token.isNot = true;
             token.value = line[++i];
             rule.push_back(token);
-        } else if (line[i] == '+' || line[i] == '|' || line[i] == '^') {
+        }
+        else if (line[i] == '+' || line[i] == '|' || line[i] == '^')
+        {
             if (rule.empty() || rule.back().isImplicator || rule.back().value == "(")
                 throw std::invalid_argument("A line has invalid format !");
             Token token;
             token.isOperator = true;
             token.value = line[i];
             rule.push_back(token);
-        } else if (line[i] == '=' && line[i + 1] == '>') {
+        }
+        else if (line[i] == '=' && line[i + 1] == '>')
+        {
             if (rule.empty() || rule.back().isImplicator || rule.back().value == "(" || implicatorFound)
                 throw std::invalid_argument("A line has invalid format !");
             Token token;
@@ -369,7 +458,9 @@ void ExpertSystem::addRule(std::string line) {
             rule.push_back(token);
             implicatorFound = true;
             i++;
-        } else if (line[i] == '<' && line[i + 1] == '=' && line[i + 2] == '>') {
+        }
+        else if (line[i] == '<' && line[i + 1] == '=' && line[i + 2] == '>')
+        {
             if (rule.empty() || rule.back().isImplicator || rule.back().value == "(" || implicatorFound)
                 throw std::invalid_argument("A line has invalid format !");
             Token token;
@@ -378,7 +469,8 @@ void ExpertSystem::addRule(std::string line) {
             rule.push_back(token);
             implicatorFound = true;
             i += 2;
-        } else
+        }
+        else
             throw std::invalid_argument("A line has invalid format !");
     }
     if (openCount)
@@ -386,23 +478,33 @@ void ExpertSystem::addRule(std::string line) {
     _rules.push_back(makeRpnRule(rule));
 }
 
-std::vector<Token> ExpertSystem::makeRpnRule(std::vector<Token> rule) {
+std::vector<Token> ExpertSystem::makeRpnRule(std::vector<Token> rule)
+{
     std::vector<Token> rpnRule;
     std::stack<Token> operatorStack;
-    for (auto token = rule.begin(); token != rule.end(); token++) {
-        if (token->isFact || token->isResult) {
+    for (auto token = rule.begin(); token != rule.end(); token++)
+    {
+        if (token->isFact || token->isResult)
+        {
             rpnRule.push_back(*token);
-        } else if (token->isOperator) {
+        }
+        else if (token->isOperator)
+        {
             for (auto priority = _priorities.find(token->value); !operatorStack.empty() && _priorities.find(operatorStack.top().value)->second <= priority->second; operatorStack.pop())
                 rpnRule.push_back(operatorStack.top());
             operatorStack.push(*token);
-        } else if (token->isImplicator) {
-            for (;!operatorStack.empty(); operatorStack.pop())
-               rpnRule.push_back(operatorStack.top());
+        }
+        else if (token->isImplicator)
+        {
+            for (; !operatorStack.empty(); operatorStack.pop())
+                rpnRule.push_back(operatorStack.top());
             rpnRule.push_back(*token);
-        } else {
+        }
+        else
+        {
             std::vector<Token> subRule;
-            for (int openCount = 0; (++token)->value != ")" || openCount; subRule.push_back(*token)) {
+            for (int openCount = 0; (++token)->value != ")" || openCount; subRule.push_back(*token))
+            {
                 if (token->value == "(")
                     openCount++;
                 else if (token->value == ")")
@@ -412,7 +514,7 @@ std::vector<Token> ExpertSystem::makeRpnRule(std::vector<Token> rule) {
             rpnRule.insert(rpnRule.end(), subRpnRule.begin(), subRpnRule.end());
         }
     }
-    for (;!operatorStack.empty(); operatorStack.pop())
+    for (; !operatorStack.empty(); operatorStack.pop())
         rpnRule.push_back(operatorStack.top());
     return rpnRule;
 }
