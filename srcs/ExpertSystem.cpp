@@ -225,6 +225,15 @@ int ExpertSystem::checkCondition(std::vector<Token> rule, std::map<char, int> &f
         return FALSE;
     else
     {
+        i++;
+        // test
+        while (i < rule.size())
+        {
+            if (rule[i].isResult == true)
+                _facts[rule[i].value[0]] = true;
+            i++;
+        }
+        std::cout << "conditions are true" << std::endl;
         ; // set characters from result as true TODO
     }
     return TRUE;
@@ -232,10 +241,36 @@ int ExpertSystem::checkCondition(std::vector<Token> rule, std::map<char, int> &f
 
 bool ExpertSystem::calculateOperation(std::string first, std::string second, std::string oper)
 {
-    (void)first;
-    (void)second;
-    (void)oper;
-    return true;
+    int status = 0;
+    if (first == "true" && second == "true")
+        status = BOTH_TRUE;
+    else if (first == "false" && second == "false")
+        status = BOTH_FALSE;
+    else
+        status = TRUE_FALSE;
+
+    if (oper == "+")
+    {
+        if (status == BOTH_TRUE)
+            return true;
+        return false;
+    }
+    else if (oper == "|")
+    {
+        if (status == BOTH_TRUE || status == TRUE_FALSE)
+            return true;
+        return false;
+    }
+    else if (oper == "^")
+    {
+        if (status == TRUE_FALSE)
+            return true;
+        return false;
+    }
+    if (DEBUG)
+        std::cout << "NOT IN CONDITIONS ??" << std::endl
+                  << std::endl;
+    return false;
 }
 
 std::vector<std::vector<Token>> ExpertSystem::createNeighbours(std::vector<std::vector<Token>> rules, std::vector<Token> &nextNeighbour, std::vector<Token> rule, char &character)

@@ -20,6 +20,10 @@
 #define TRUE 1
 #define END_BRANCH 2
 
+#define BOTH_FALSE 100
+#define BOTH_TRUE 200
+#define TRUE_FALSE 300
+
 // => is an implicator
 // ! is (not) true
 // D is the result
