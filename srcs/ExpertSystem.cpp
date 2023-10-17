@@ -92,11 +92,19 @@ void ExpertSystem::expertLogic()
             auto facts = _facts;
             int tmp = recursiveLogic(_rules, neighbour, facts);
             if (tmp == TRUE)
+            {
+                std::cout << "Query for : " << query << " is true" << std::endl;
                 _facts[query] = true;
+            }
+            else
+                std::cout << "Query for : " << query << " is false" << std::endl;
         }
-        for (auto fact : _facts)
+        if (DEBUG)
         {
-            std::cout << fact.first << " is " << fact.second << std::endl;
+            for (auto fact : _facts)
+            {
+                std::cout << fact.first << " is " << fact.second << std::endl;
+            }
         }
         std::cout << std::endl;
     }
