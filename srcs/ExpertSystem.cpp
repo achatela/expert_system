@@ -311,7 +311,7 @@ std::vector<std::vector<Token>> ExpertSystem::createNeighbours(std::vector<std::
         for (auto token : rules[i]) {
             if (token.isResult && queries.find(token.value) != queries.end()) {
                 neighbours.push_back(rules[i]);
-                rules.erase(std::find(rules.begin(), rules.end(), rules[i]));
+                rules.erase(std::find(rules.begin(), rules.end(), rules[i--]));
                 break;
             }
         }
