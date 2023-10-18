@@ -67,7 +67,7 @@ class ExpertSystem
 private:
     std::vector<std::vector<Token>> _rules;
     std::map<std::string, int> _facts;
-    std::set<std::string> _queries;
+    std::string _queries;
     std::map<std::string, int> _priorities = {std::pair<std::string, int>("+", 1), std::pair<std::string, int>("|", 2), std::pair<std::string, int>("^", 3)};
 
 public:
@@ -85,9 +85,11 @@ public:
     std::vector<Token> makeRpnRule(std::vector<Token>);
     void printDebug(std::string);
     void expertLogic();
-    int recursiveLogic(std::vector<std::vector<Token>>, std::vector<Token>, std::map<std::string, int> &);
-    std::vector<std::vector<Token>> createQueryNeighbours(std::vector<std::vector<Token>>, std::string);
+    int recursiveLogic(std::vector<std::vector<Token>>, std::vector<Token>);
+    // std::vector<std::vector<Token>> createQueryNeighbours(std::vector<std::vector<Token>>, std::string);
     std::vector<std::vector<Token>> createNeighbours(std::vector<std::vector<Token>> &, std::vector<Token>);
-    int checkCondition(std::vector<Token>, std::map<std::string, int> &);
+    int implier(std::vector<Token>);
+    int calculator(int, int, std::string);
+    int checkCondition(std::vector<Token>);
     bool calculateOperation(std::string, std::string, std::string);
 };
