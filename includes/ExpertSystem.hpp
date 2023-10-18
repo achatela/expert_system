@@ -66,8 +66,8 @@ class ExpertSystem
 {
 private:
     std::vector<std::vector<Token>> _rules;
-    std::map<char, int> _facts;
-    std::vector<char> _queries;
+    std::map<std::string, int> _facts;
+    std::set<std::string> _queries;
     std::map<std::string, int> _priorities = {std::pair<std::string, int>("+", 1), std::pair<std::string, int>("|", 2), std::pair<std::string, int>("^", 3)};
 
 public:
@@ -85,10 +85,9 @@ public:
     std::vector<Token> makeRpnRule(std::vector<Token>);
     void printDebug(std::string);
     void expertLogic();
-    int recursiveLogic(std::vector<std::vector<Token>>, std::vector<Token>, std::map<char, int> &);
-    std::vector<std::vector<Token>> createQueryNeighbours(std::vector<std::vector<Token>>, char);
+    int recursiveLogic(std::vector<std::vector<Token>>, std::vector<Token>, std::map<std::string, int> &);
+    std::vector<std::vector<Token>> createQueryNeighbours(std::vector<std::vector<Token>>, std::string);
     std::vector<std::vector<Token>> createNeighbours(std::vector<std::vector<Token>> &, std::vector<Token>);
-    // std::vector<std::vector<Token>> createNeighbours(std::vector<std::vector<Token>>, std::vector<Token> &, std::vector<Token>, char &, unsigned long &j);
-    int checkCondition(std::vector<Token>, std::map<char, int> &);
+    int checkCondition(std::vector<Token>, std::map<std::string, int> &);
     bool calculateOperation(std::string, std::string, std::string);
 };

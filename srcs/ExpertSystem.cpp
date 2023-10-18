@@ -12,7 +12,7 @@ ExpertSystem::ExpertSystem(std::string fileName)
     std::ifstream ifs(fileName);
     bool initialized = false;
     bool queryInitialized = false;
-    std::string toInitialize;
+    std::set<std::string> toInitialize;
     for (std::string line; std::getline(ifs, line);)
     {
         if (isCommentOrEmpty(line))
@@ -31,7 +31,7 @@ ExpertSystem::ExpertSystem(std::string fileName)
                     if (i >= line.length())
                         throw std::invalid_argument("Query line has to have atleast one character !");
                     while (i < line.length() && isupper(line[i]))
-                        toInitialize += line[i++];
+                        toInitialize.insert(std::string(1, line[i++]));
                 }
                 else
                     break;
@@ -53,8 +53,9 @@ ExpertSystem::ExpertSystem(std::string fileName)
                     i++;
                     if (i >= line.length())
                         throw std::invalid_argument("Query line has to have atleast one character !");
-                    while (i < line.length() && isupper(line[i]))
-                        _queries.push_back(line[i++]);
+                    while (i < line.length() && isupper(line[i])){
+                        _queries.insert(std::string(1, line[i++]));
+                    }
                 }
                 else
                     break;
@@ -124,7 +125,7 @@ void ExpertSystem::expertLogic()
     }
 }
 
-int ExpertSystem::recursiveLogic(std::vector<std::vector<Token>> rules, std::vector<Token> rule, std::map<char, int> &facts)
+int ExpertSystem::recursiveLogic(std::vector<std::vector<Token>> rules, std::vector<Token> rule, std::map<std::string, int> &facts)
 {
     if (rules.empty())
         return END_BRANCH;
@@ -136,7 +137,7 @@ int ExpertSystem::recursiveLogic(std::vector<std::vector<Token>> rules, std::vec
     return checkCondition(rule, facts);
 }
 
-int ExpertSystem::checkCondition(std::vector<Token> rule, std::map<char, int> &facts)
+int ExpertSystem::checkCondition(std::vector<Token> rule, std::map<std::string, int> &facts)
 {
     (void)facts;
     (void)rule;
@@ -159,12 +160,12 @@ int ExpertSystem::checkCondition(std::vector<Token> rule, std::map<char, int> &f
         {
             if (rule[i].isNot == true)
             {
-                std::string toPush = (facts[rule[i].value[0]] == FALSE || facts[rule[i].value[0]] == UNDETERMINED) ? "true" : "false";
+                std::string toPush = (facts[rule[i].value] == FALSE || facts[rule[i].value] == UNDETERMINED) ? "true" : "false";
                 ruleFacts.push_back(toPush);
             }
             else
             {
-                std::string toPush = (facts[rule[i].value[0]] == TRUE || facts[rule[i].value[0]] == UNDETERMINED) ? "true" : "false";
+                std::string toPush = (facts[rule[i].value] == TRUE || facts[rule[i].value] == UNDETERMINED) ? "true" : "false";
                 ruleFacts.push_back(toPush);
             }
         }
@@ -243,20 +244,20 @@ int ExpertSystem::checkCondition(std::vector<Token> rule, std::map<char, int> &f
         {
             if (rule[i].isResult == true && rule[i].isNot == false)
             {
-                facts[rule[i].value[0]] = UNDETERMINED;
+                facts[rule[i].value] = UNDETERMINED;
                 if (isUndetermined == false)
-                    facts[rule[i].value[0]] = true;
+                    facts[rule[i].value] = true;
             }
             else
             {
-                if (facts[rule[i].value[0]] == true)
+                if (facts[rule[i].value] == true)
                 {
                     std::cout << "exception?" << std::endl;
                     std::invalid_argument("Contradiction !");
                 }
-                facts[rule[i].value[0]] = UNDETERMINED;
+                facts[rule[i].value] = UNDETERMINED;
                 if (isUndetermined == false)
-                    facts[rule[i].value[0]] = false;
+                    facts[rule[i].value] = false;
             }
             i++;
         };
@@ -322,13 +323,13 @@ std::vector<std::vector<Token>> ExpertSystem::createNeighbours(std::vector<std::
     return neighbours;
 }
 
-std::vector<std::vector<Token>> ExpertSystem::createQueryNeighbours(std::vector<std::vector<Token>> rules, char query)
+std::vector<std::vector<Token>> ExpertSystem::createQueryNeighbours(std::vector<std::vector<Token>> rules, std::string query)
 {
     std::vector<std::vector<Token>> neighbours;
     for (auto rule : rules)
     {
         for (auto token : rule)
-            if (token.isResult == true && (token.value[0] == query)) // || (token.value.size() == 2 && token.value[1] == query))) pas sur
+            if (token.isResult == true && (token.value == query)) // || (token.value.size() == 2 && token.value[1] == query))) pas sur
             {
                 neighbours.push_back(rule);
                 break;
