@@ -58,6 +58,9 @@ struct Token
 
         return os;
     }
+
+    bool operator==(const Token& rhs) const {return this->value == rhs.value;}
+
 };
 
 class ExpertSystem

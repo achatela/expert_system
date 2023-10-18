@@ -302,11 +302,11 @@ std::vector<std::vector<Token>> ExpertSystem::createNeighbours(std::vector<std::
         if (token->isFact)
             queries.insert(token->value);
     std::vector<std::vector<Token>> neighbours;
-    for (auto rule = rules.begin(); rule != rules.end(); rule++) {
-        for (auto token = rule->begin(); token != rule->end(); token++) {
-            if (token->isResult && queries.find(token->value) != queries.end()) {
-                neighbours.push_back(*rule);
-                rule = rules.erase(rule) - 1;
+    for (unsigned long i = 0; i < rules.size(); i++) {
+        for (auto token : rules[i]) {
+            if (token.isResult && queries.find(token.value) != queries.end()) {
+                neighbours.push_back(rules[i]);
+                rules.erase(std::find(rules.begin(), rules.end(), rules[i]));
                 break;
             }
         }
