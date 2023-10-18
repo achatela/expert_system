@@ -18,7 +18,8 @@
 
 #define FALSE 0
 #define TRUE 1
-#define END_BRANCH 2
+#define UNDETERMINED 2
+#define END_BRANCH 3
 
 #define BOTH_FALSE 100
 #define BOTH_TRUE 200
@@ -83,7 +84,7 @@ public:
     void expertLogic();
     int recursiveLogic(std::vector<std::vector<Token>>, std::vector<Token>, std::map<char, int>);
     std::vector<std::vector<Token>> createQueryNeighbours(std::vector<std::vector<Token>>, char);
-    std::vector<std::vector<Token>> createNeighbours(std::vector<std::vector<Token>>, std::vector<Token> &, std::vector<Token>, char &);
+    std::vector<std::vector<Token>> createNeighbours(std::vector<std::vector<Token>>, std::vector<Token> &, std::vector<Token>, char &, unsigned long &j);
     int checkCondition(std::vector<Token>, std::map<char, int> &);
     bool calculateOperation(std::string, std::string, std::string);
 };
