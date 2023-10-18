@@ -86,7 +86,7 @@ public:
     std::vector<Token> makeRpnRule(std::vector<Token>);
     void printDebug(std::string);
     void expertLogic();
-    int recursiveLogic(std::vector<std::vector<Token>>, std::vector<Token>, std::map<char, int> &);
+    int recursiveLogic(std::vector<std::vector<Token>>, std::vector<Token>, std::map<char, int>);
     std::vector<std::vector<Token>> createQueryNeighbours(std::vector<std::vector<Token>>, char);
     std::vector<std::vector<Token>> createNeighbours(std::vector<std::vector<Token>> &, std::vector<Token>);
     // std::vector<std::vector<Token>> createNeighbours(std::vector<std::vector<Token>>, std::vector<Token> &, std::vector<Token>, char &, unsigned long &j);

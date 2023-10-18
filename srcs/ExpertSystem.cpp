@@ -90,27 +90,23 @@ void ExpertSystem::expertLogic()
         for (auto neighbour : neighbours)
         {
             auto facts = _facts;
-            recursiveLogic(_rules, neighbour, facts);
-
-            if (facts[query] == true)
+            int tmp = recursiveLogic(_rules, neighbour, facts);
+            if (tmp == TRUE)
             {
-                _facts[query] = true;
                 std::cout << "\nQuery for : " << query << " is true" << std::endl
                           << std::endl;
+                _facts[query] = true;
             }
-            else if (facts[query] == UNDETERMINED)
+            else if (tmp == FALSE)
             {
-                _facts[query] = UNDETERMINED;
-                std::cout
-                    << "\nQuery for : " << query << " is undetermined" << std::endl
-                    << std::endl;
+                if (_facts[query] == true)
+                    std::invalid_argument("Contradiction !");
+                std::cout << "\nQuery for : " << query << " is false" << std::endl
+                          << std::endl;
             }
-            else
+            else if (tmp == UNDETERMINED)
             {
-                _facts[query] = FALSE;
-                std::cout
-                    << "\nQuery for : " << query << " is false" << std::endl
-                    << std::endl;
+                std::cout << "\nQuery for : " << query << " is undetermined" << std::endl;
             }
         }
         if (DEBUG)
@@ -124,7 +120,7 @@ void ExpertSystem::expertLogic()
     }
 }
 
-int ExpertSystem::recursiveLogic(std::vector<std::vector<Token>> rules, std::vector<Token> rule, std::map<char, int> &facts)
+int ExpertSystem::recursiveLogic(std::vector<std::vector<Token>> rules, std::vector<Token> rule, std::map<char, int> facts)
 {
     if (rules.empty())
         return END_BRANCH;
@@ -164,7 +160,7 @@ int ExpertSystem::checkCondition(std::vector<Token> rule, std::map<char, int> &f
             }
             else
             {
-                std::string toPush = (facts[rule[i].value[0]] == TRUE || facts[rule[i].value[0]] == UNDETERMINED) ? "true" : "false";
+                std::string toPush = (facts[rule[i].value[0]] == FALSE || facts[rule[i].value[0]] == UNDETERMINED) ? "true" : "false";
                 ruleFacts.push_back(toPush);
             }
         }
@@ -223,7 +219,7 @@ int ExpertSystem::checkCondition(std::vector<Token> rule, std::map<char, int> &f
     bool isUndetermined = false;
     if (resultOperation == false)
         return FALSE;
-    else if (resultOperation == true)
+    else
     {
         i++;
         unsigned long j = i;
@@ -241,7 +237,7 @@ int ExpertSystem::checkCondition(std::vector<Token> rule, std::map<char, int> &f
         }
         while (i < rule.size())
         {
-            if (rule[i].isResult == true && rule[i].isNot == false)
+            if (rule[i].isResult == true || rule[i].isNot == false)
             {
                 facts[rule[i].value[0]] = UNDETERMINED;
                 if (isUndetermined == false)
@@ -300,18 +296,17 @@ bool ExpertSystem::calculateOperation(std::string first, std::string second, std
     return false;
 }
 
-std::vector<std::vector<Token>> ExpertSystem::createNeighbours(std::vector<std::vector<Token>> &rules, std::vector<Token> currentRule)
-{
+std::vector<std::vector<Token>> ExpertSystem::createNeighbours(std::vector<std::vector<Token>> &rules, std::vector<Token> currentRule) {
     std::set<std::string> queries;
     for (auto token = currentRule.begin(); !token->isImplicator; token++)
         if (token->isFact)
             queries.insert(token->value);
     std::vector<std::vector<Token>> neighbours;
-    for (unsigned long i = 0; i < rules.size(); i++) {
-        for (auto token : rules[i]) {
-            if (token.isResult && queries.find(token.value) != queries.end()) {
-                neighbours.push_back(rules[i]);
-                rules.erase(std::find(rules.begin(), rules.end(), rules[i--]));
+    for (auto rule = rules.begin(); rule != rules.end(); rule++) {
+        for (auto token = rule->begin(); token != rule->end(); token++) {
+            if (token->isResult && queries.find(token->value) != queries.end()) {
+                neighbours.push_back(*rule);
+                rule = rules.erase(rule) - 1;
                 break;
             }
         }
