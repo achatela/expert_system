@@ -72,7 +72,7 @@ ExpertSystem::ExpertSystem(std::string fileName)
     // }
 
     for (auto c : toInitialize)
-        _facts[c] = true;
+        _facts[c] = TRUE;
 
     // if (DEBUG)
     //     printDebug(toInitialize);
@@ -84,17 +84,18 @@ ExpertSystem::~ExpertSystem() {}
 
 void ExpertSystem::expertLogic()
 {
+    auto firstFacts = _facts;
     for (auto query : _queries)
     {
         std::vector<std::vector<Token>> neighbours = createQueryNeighbours(_rules, query);
         for (auto neighbour : neighbours)
         {
-            auto facts = _facts;
+            auto facts = firstFacts;
             recursiveLogic(_rules, neighbour, facts);
 
-            if (facts[query] == true)
+            if (facts[query] == TRUE)
             {
-                _facts[query] = true;
+                _facts[query] = TRUE;
                 std::cout << "\nQuery for : " << query << " is true" << std::endl
                           << std::endl;
             }
@@ -241,25 +242,36 @@ int ExpertSystem::checkCondition(std::vector<Token> rule, std::map<char, int> &f
         }
         while (i < rule.size())
         {
-            if (rule[i].isResult == true && rule[i].isNot == false)
+            if (rule[i].isResult == true && isUndetermined == true)
             {
                 facts[rule[i].value[0]] = UNDETERMINED;
-                if (isUndetermined == false)
-                    facts[rule[i].value[0]] = true;
+                i++;
+                continue;
             }
+            if (rule[i].isResult == true && rule[i].isNot == false)
+                facts[rule[i].value[0]] = TRUE;
             else
             {
-                if (facts[rule[i].value[0]] == true)
+                if (facts[rule[i].value[0]] == TRUE)
                 {
                     std::cout << "exception?" << std::endl;
                     std::invalid_argument("Contradiction !");
                 }
-                facts[rule[i].value[0]] = UNDETERMINED;
-                if (isUndetermined == false)
-                    facts[rule[i].value[0]] = false;
+                else
+                    facts[rule[i].value[0]] = FALSE;
             }
             i++;
         };
+    }
+    if (DEBUG)
+    {
+        std::cout << "char in facts that are true after set: ";
+        for (auto it : facts)
+        {
+            if (it.second == TRUE)
+                std::cout << it.first;
+        }
+        std::cout << std::endl;
     }
     if (isUndetermined == true)
         return UNDETERMINED;
