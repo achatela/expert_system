@@ -122,12 +122,11 @@ void ExpertSystem::expertLogic()
 
 int ExpertSystem::recursiveLogic(std::vector<std::vector<Token>> rules, std::vector<Token> rule, std::map<char, int> facts)
 {
-    if (rules.empty() || rule.empty())
+    if (rules.empty())
         return END_BRANCH;
     std::vector<std::vector<Token>> neighbours = createNeighbours(rules, rule);
     if (neighbours.empty())
         return checkCondition(rule, facts);
-    std::cout << neighbours.size() << std::endl;
     for (auto neighbour : neighbours)
         recursiveLogic(rules, neighbour, facts);
     return checkCondition(rule, facts);
@@ -307,8 +306,7 @@ std::vector<std::vector<Token>> ExpertSystem::createNeighbours(std::vector<std::
         for (auto token = rule->begin(); token != rule->end(); token++) {
             if (token->isResult && queries.find(token->value) != queries.end()) {
                 neighbours.push_back(*rule);
-                rules.erase(rule);
-                rule = rules.begin();
+                rule = rules.erase(rule) - 1;
                 break;
             }
         }
