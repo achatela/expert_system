@@ -124,25 +124,12 @@ int ExpertSystem::recursiveLogic(std::vector<std::vector<Token>> rules, std::vec
 {
     if (rules.empty() || rule.empty())
         return END_BRANCH;
-    std::vector<Token> nextNeighbour;
-    unsigned long j = 0;
-    char checkCharacter = 0;
-    rules = createNeighbours(rules, nextNeighbour, rule, checkCharacter, j);
-    int branchResult;
-    if (nextNeighbour.empty())
+    std::vector<std::vector<Token>> neighbours = createNeighbours(rules, rule);
+    if (neighbours.empty())
         return checkCondition(rule, facts);
-    while (!nextNeighbour.empty())
-    {
-        branchResult = recursiveLogic(rules, nextNeighbour, facts);
-        if (branchResult != END_BRANCH)
-        {
-            if (facts[checkCharacter] == true && branchResult == FALSE)
-                std::invalid_argument("Contradiction found !");
-            facts[checkCharacter] = branchResult;
-        }
-        rules = createNeighbours(rules, nextNeighbour, rule, checkCharacter, j);
-        std::cout << std::endl;
-    }
+    std::cout << neighbours.size() << std::endl;
+    for (auto neighbour : neighbours)
+        recursiveLogic(rules, neighbour, facts);
     return checkCondition(rule, facts);
 }
 
@@ -310,38 +297,23 @@ bool ExpertSystem::calculateOperation(std::string first, std::string second, std
     return false;
 }
 
-std::vector<std::vector<Token>> ExpertSystem::createNeighbours(std::vector<std::vector<Token>> rules, std::vector<Token> &nextNeighbour, std::vector<Token> rule, char &character, unsigned long &j)
-{
-    nextNeighbour.clear();
-    character = 0;
-    std::string characters;
-    for (unsigned long i = 0; rule[i].isImplicator == false; i++)
-    {
-        if (rule[i].isFact == true)
-        {
-            characters += rule[i].value;
-        }
-    }
-    for (; j < rules.size(); j++)
-    {
-        for (unsigned long k = rules[j].size() - 1; rules[j][k].isImplicator == false; k--)
-        {
-            if (rules[j][k].isResult == true)
-            {
-                if (characters.find(rules[j][k].value[0]) != std::string::npos)
-                {
-                    character = rules[j][k].value[0];
-                    // if (rules[j][k].value[0] == '!')
-                    //     character = rules[j][k].value[1];
-                    nextNeighbour = rules[j];
-                    rules.erase(rules.begin() + j);
-                    goto fix;
-                }
+std::vector<std::vector<Token>> ExpertSystem::createNeighbours(std::vector<std::vector<Token>> &rules, std::vector<Token> currentRule) {
+    std::set<std::string> queries;
+    for (auto token = currentRule.begin(); !token->isImplicator; token++)
+        if (token->isFact)
+            queries.insert(token->value);
+    std::vector<std::vector<Token>> neighbours;
+    for (auto rule = rules.begin(); rule != rules.end(); rule++) {
+        for (auto token = rule->begin(); token != rule->end(); token++) {
+            if (token->isResult && queries.find(token->value) != queries.end()) {
+                neighbours.push_back(*rule);
+                rules.erase(rule);
+                rule = rules.begin();
+                break;
             }
         }
     }
-fix:
-    return rules;
+    return neighbours;
 }
 
 std::vector<std::vector<Token>> ExpertSystem::createQueryNeighbours(std::vector<std::vector<Token>> rules, char query)
