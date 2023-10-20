@@ -85,11 +85,11 @@ public:
     std::vector<Token> makeRpnRule(std::vector<Token>);
     void printDebug(std::string);
     void expertLogic();
-    int recursiveLogic(std::vector<std::vector<Token>>, std::vector<Token>);
+    std::map<std::string, int> recursiveLogic(std::map<std::string, int>, std::vector<std::vector<Token>>, std::vector<Token>);
     // std::vector<std::vector<Token>> createQueryNeighbours(std::vector<std::vector<Token>>, std::string);
-    std::vector<std::vector<Token>> createNeighbours(std::vector<std::vector<Token>> &, std::vector<Token>);
-    int implier(std::vector<Token>);
+    // std::vector<std::vector<Token>> createNeighbours(std::vector<std::vector<Token>>, std::vector<Token>);
+    int implier(std::map<std::string, int>, std::vector<Token>);
     int calculator(int, int, std::string);
-    int checkCondition(std::vector<Token>);
+    std::map<std::string, int> checkCondition(std::map<std::string, int>, std::vector<Token>);
     bool calculateOperation(std::string, std::string, std::string);
 };

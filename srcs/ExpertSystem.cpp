@@ -92,9 +92,12 @@ void ExpertSystem::expertLogic()
         token.value = query;
         initialRule.push_back(token);
     }
-    auto neighbours = createNeighbours(_rules, initialRule);
-    for (auto neighbour : neighbours)
-        recursiveLogic(_rules, neighbour);
+    // auto neighbours = createNeighbours(_rules, initialRule);
+    // for (auto neighbour : neighbours)
+    //     recursiveLogic(_rules, neighbour);
+    std::map<std::string, int> backFacts = recursiveLogic(_facts, _rules, initialRule);
+    // verifier si il y a des incoherences
+    _facts = backFacts;
     for (auto fact : _facts)
     {
         if (DEBUG || _queries.find(fact.first) != std::string::npos)
@@ -109,60 +112,72 @@ void ExpertSystem::expertLogic()
         }
     }
     if (DEBUG)
-        for (auto rules : _rules)
-            recursiveLogic(_rules, rules);
+        for (auto rule : _rules)
+            recursiveLogic(_facts, _rules, rule);
 }
 
-int ExpertSystem::recursiveLogic(std::vector<std::vector<Token>> rules, std::vector<Token> rule)
+std::map<std::string, int> ExpertSystem::recursiveLogic(std::map<std::string, int> facts, std::vector<std::vector<Token>> rules, std::vector<Token> currentRule)
 {
+    std::cout << "recursiveLogic start" << std::endl;
     if (rules.empty())
-        return checkCondition(rule);
-    auto neighbours = createNeighbours(rules, rule);
-    if (neighbours.empty())
-        return checkCondition(rule);
-    for (auto neighbour : neighbours)
-        recursiveLogic(rules, neighbour);
-    return checkCondition(rule);
-}
-
-std::vector<std::vector<Token>> ExpertSystem::createNeighbours(std::vector<std::vector<Token>> &rules, std::vector<Token> currentRule)
-{
+        return checkCondition(facts, currentRule);
     std::set<std::string> queries;
     for (auto token = currentRule.begin(); token != currentRule.end() && !token->isImplicator; token++)
         if (token->isFact)
             queries.insert(token->value);
-    std::vector<std::vector<Token>> neighbours;
     for (auto rule = rules.begin(); rule != rules.end(); rule++)
     {
         for (auto token = rule->begin(); token != rule->end(); token++)
         {
             if (token->isResult && queries.find(token->value) != queries.end())
             {
-                neighbours.push_back(*rule);
+                auto backRule = *rule;
                 rule = rules.erase(rule) - 1;
+                std::map<std::string, int> backFacts = recursiveLogic(facts, rules, backRule);
+                // verifier si il y a des incoherences
+                facts = backFacts;
                 break;
             }
         }
     }
-    return neighbours;
+    return checkCondition(facts, currentRule);
 }
 
-int ExpertSystem::implier(std::vector<Token> rule)
+// std::vector<std::vector<Token>> ExpertSystem::createNeighbours(std::vector<std::vector<Token>> rules, std::vector<Token> currentRule)
+// {
+//     std::set<std::string> queries;
+//     for (auto token = currentRule.begin(); token != currentRule.end() && !token->isImplicator; token++)
+//         if (token->isFact)
+//             queries.insert(token->value);
+//     std::vector<std::vector<Token>> neighbours;
+//     for (auto rule = rules.begin(); rule != rules.end(); rule++)
+//     {
+//         for (auto token = rule->begin(); token != rule->end(); token++)
+//         {
+//             if (token->isResult && queries.find(token->value) != queries.end())
+//             {
+//                 neighbours.push_back(*rule);
+//                 break;
+//             }
+//         }
+//     }
+//     return neighbours;
+// }
+
+int ExpertSystem::implier(std::map<std::string, int> facts, std::vector<Token> rule)
 {
-    int first = _facts.find(rule[0].value) == _facts.end() ? FALSE : _facts[rule[0].value];
-    int second = -1;
-    for (auto token = rule.begin() + 1; token != rule.end() && token->value != "=>"; token++)
-    {
-        // if (token->value == "<=>")
-        if (token->isOperator)
-        {
-            first = calculator(first, second, token->value);
+    int result = -1;
+    for (auto token = rule.begin(); token != rule.end() && token->isImplicator; token++) {
+        if (token->isOperator) {
+            if (result == -1)
+                result = facts.find((token - 2)->value) != facts.end() ? facts[(token - 2)->value] : FALSE;
+            result = calculator(result, facts.find((token - 1)->value) != facts.end() ? facts[(token - 1)->value] : FALSE, token->value);
             token = rule.erase(token - 1, token + 1) - 1;
         }
-        else
-            second = _facts.find(token->value) == _facts.end() ? FALSE : _facts[token->value];
     }
-    return first;
+    if (result == -1)
+        return facts.find(rule[0].value) != facts.end() ? facts[rule[0].value] : FALSE;
+    return result;
 }
 
 int ExpertSystem::calculator(int first, int second, std::string op)
@@ -187,8 +202,9 @@ int ExpertSystem::calculator(int first, int second, std::string op)
     }
 }
 
-int ExpertSystem::checkCondition(std::vector<Token> rule)
+std::map<std::string, int> ExpertSystem::checkCondition(std::map<std::string, int> facts, std::vector<Token> rule)
 {
+    std::cout << "checkCondition start" << std::endl;
     (void)rule;
     if (DEBUG)
     {
@@ -198,14 +214,10 @@ int ExpertSystem::checkCondition(std::vector<Token> rule)
         std::cout << std::endl;
     }
     bool resultOperation = false;
-    resultOperation = implier(rule);
+    resultOperation = implier(facts, rule);
     unsigned long i = 0;
-    while (i < rule.size())
-    {
-        if (rule[i].isImplicator == true)
-            break;
+    while (i < rule.size() && !rule[i].isImplicator)
         i++;
-    }
 
     // if (DEBUG)
     // {
@@ -218,10 +230,15 @@ int ExpertSystem::checkCondition(std::vector<Token> rule)
     //     std::cout << std::endl;
     // }
 
+    if (resultOperation == false) {
+        if (i == rule.size())
+            std::invalid_argument("Contradiction !");
+        return facts;
+    }
+    //     return FALSE;
     bool isUndetermined = false;
-    if (resultOperation == false)
-        return FALSE;
-    else if (resultOperation == true)
+    std::cout << "before result" << std::endl;
+    if (resultOperation == true)
     {
         i++;
         unsigned long j = i;
@@ -241,15 +258,15 @@ int ExpertSystem::checkCondition(std::vector<Token> rule)
         {
             if (rule[i].isResult == true && isUndetermined == true)
             {
-                _facts[rule[i].value] = UNDETERMINED;
+                facts[rule[i].value] = UNDETERMINED;
                 i++;
                 continue;
             }
             if (rule[i].isResult == true && rule[i].isNot == false)
-                _facts[rule[i].value] = TRUE;
+                facts[rule[i].value] = TRUE;
             else
             {
-                if (_facts[rule[i].value] == TRUE)
+                if (facts[rule[i].value] == TRUE)
                 {
                     std::cout << "exception?" << std::endl;
                     std::invalid_argument("Contradiction !");
@@ -257,7 +274,7 @@ int ExpertSystem::checkCondition(std::vector<Token> rule)
                 else
                 {
                     std::cout << rule[i] << std::endl;
-                    _facts[rule[i].value] = FALSE;
+                    facts[rule[i].value] = FALSE;
                 }
             }
             i++;
@@ -266,16 +283,17 @@ int ExpertSystem::checkCondition(std::vector<Token> rule)
     if (DEBUG)
     {
         std::cout << "char in _facts that are true after set: ";
-        for (auto it : _facts)
+        for (auto it : facts)
         {
             if (it.second == TRUE)
                 std::cout << it.first;
         }
         std::cout << std::endl;
     }
-    if (isUndetermined == true)
-        return UNDETERMINED;
-    return TRUE;
+    // if (isUndetermined == true)
+    //     return UNDETERMINED;
+    // return TRUE;
+    return facts;
 };
 
 void ExpertSystem::printDebug(std::string toInitialize)
@@ -465,6 +483,7 @@ std::vector<Token> ExpertSystem::makeRpnRule(std::vector<Token> rule)
 {
     std::vector<Token> rpnRule;
     std::stack<Token> operatorStack;
+    bool biConditionalFound = false;
     for (auto token = rule.begin(); token != rule.end(); token++)
     {
         if (token->isFact || token->isResult)
@@ -479,9 +498,13 @@ std::vector<Token> ExpertSystem::makeRpnRule(std::vector<Token> rule)
         }
         else if (token->isImplicator)
         {
+            
             for (; !operatorStack.empty(); operatorStack.pop())
                 rpnRule.push_back(operatorStack.top());
-            rpnRule.push_back(*token);
+            if (token->value == "<=>")
+                biConditionalFound = true;
+            else
+                rpnRule.push_back(*token);
         }
         else
         {
@@ -499,5 +522,12 @@ std::vector<Token> ExpertSystem::makeRpnRule(std::vector<Token> rule)
     }
     for (; !operatorStack.empty(); operatorStack.pop())
         rpnRule.push_back(operatorStack.top());
+    if (biConditionalFound){
+        Token token;
+        token.isOperator = true;
+        token.value = "+";
+        rule.push_back(token);
+    }
+
     return rpnRule;
 }
