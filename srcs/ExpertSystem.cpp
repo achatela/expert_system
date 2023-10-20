@@ -85,7 +85,8 @@ ExpertSystem::~ExpertSystem() {}
 void ExpertSystem::expertLogic()
 {
     std::vector<Token> initialRule;
-    for (auto query : _queries) {
+    for (auto query : _queries)
+    {
         Token token;
         token.isFact = true;
         token.value = query;
@@ -94,8 +95,10 @@ void ExpertSystem::expertLogic()
     auto neighbours = createNeighbours(_rules, initialRule);
     for (auto neighbour : neighbours)
         recursiveLogic(_rules, neighbour);
-    for (auto fact: _facts) {
-        if (DEBUG || _queries.find(fact.first) != std::string::npos) {
+    for (auto fact : _facts)
+    {
+        if (DEBUG || _queries.find(fact.first) != std::string::npos)
+        {
             std::cout << fact.first << " is ";
             if (fact.second == TRUE)
                 std::cout << "true" << std::endl;
@@ -105,51 +108,15 @@ void ExpertSystem::expertLogic()
                 std::cout << "undetermined" << std::endl;
         }
     }
-    // auto firstFacts = _facts;
-    // for (auto query : _queries)
-    // {
-    //     std::vector<std::vector<Token>> neighbours = createQueryNeighbours(_rules, query);
-    //     for (auto neighbour : neighbours)
-    //     {
-    //         auto _facts = firstFacts;
-    //         recursiveLogic(_rules, neighbour);
-
-    //         if (_facts[query] == TRUE)
-    //         {
-    //             _facts[query] = TRUE;
-    //             std::cout << "\nQuery for : " << query << " is true" << std::endl
-    //                       << std::endl;
-    //         }
-    //         else if (_facts[query] == UNDETERMINED)
-    //         {
-    //             _facts[query] = UNDETERMINED;
-    //             std::cout
-    //                 << "\nQuery for : " << query << " is undetermined" << std::endl
-    //                 << std::endl;
-    //         }
-    //         else
-    //         {
-    //             _facts[query] = FALSE;
-    //             std::cout
-    //                 << "\nQuery for : " << query << " is false" << std::endl
-    //                 << std::endl;
-    //         }
-    //     }
-    //     if (DEBUG)
-    //     {
-    //         for (auto fact : _facts)
-    //         {
-    //             std::cout << fact.first << " is " << fact.second << std::endl;
-    //         }
-    //     }
-    //     std::cout << std::endl;
-    // }
+    if (DEBUG)
+        for (auto rules : _rules)
+            recursiveLogic(_rules, rules);
 }
 
 int ExpertSystem::recursiveLogic(std::vector<std::vector<Token>> rules, std::vector<Token> rule)
 {
     if (rules.empty())
-        return END_BRANCH;
+        return checkCondition(rule);
     auto neighbours = createNeighbours(rules, rule);
     if (neighbours.empty())
         return checkCondition(rule);
@@ -180,40 +147,45 @@ std::vector<std::vector<Token>> ExpertSystem::createNeighbours(std::vector<std::
     return neighbours;
 }
 
-int ExpertSystem::implier(std::vector<Token> rule) {
-    int result = -1;
-    for (auto token = rule.begin(); token != rule.end() && token->value != "=>"; token++) {
+int ExpertSystem::implier(std::vector<Token> rule)
+{
+    int first = _facts.find(rule[0].value) == _facts.end() ? FALSE : _facts[rule[0].value];
+    int second = -1;
+    for (auto token = rule.begin() + 1; token != rule.end() && token->value != "=>"; token++)
+    {
         // if (token->value == "<=>")
-        if (token->isOperator) {
-            if (result == -1) {
-                result = calculator(_facts[(token - 2)->value], _facts[(token - 1)->value], token->value);
-                token = rule.erase(token - 2, token) - 1;
-            } else {
-                result = calculator(result, _facts[(token - 1)->value], token->value);
-                token = rule.erase(token - 1, token) - 1;
-            }
+        if (token->isOperator)
+        {
+            first = calculator(first, second, token->value);
+            token = rule.erase(token - 1, token + 1) - 1;
         }
+        else
+            second = _facts.find(token->value) == _facts.end() ? FALSE : _facts[token->value];
     }
-    return 0;
+    return first;
 }
 
-int ExpertSystem::calculator(int first, int second, std::string op) {
-    if (op == "+") {
+int ExpertSystem::calculator(int first, int second, std::string op)
+{
+    if (op == "+")
+    {
         if (first == TRUE && second == TRUE)
             return TRUE;
         return FALSE;
-    } else if (op == "|") {
+    }
+    else if (op == "|")
+    {
         if (first == TRUE || second == TRUE)
             return TRUE;
         return FALSE;
-    } else {
+    }
+    else
+    {
         if ((first == TRUE && second == FALSE) || (first == FALSE && second == TRUE))
             return TRUE;
         return FALSE;
     }
 }
-
-
 
 int ExpertSystem::checkCondition(std::vector<Token> rule)
 {
@@ -226,78 +198,26 @@ int ExpertSystem::checkCondition(std::vector<Token> rule)
         std::cout << std::endl;
     }
     bool resultOperation = false;
+    resultOperation = implier(rule);
     unsigned long i = 0;
-    std::list<std::string> ruleFacts;
-
     while (i < rule.size())
     {
         if (rule[i].isImplicator == true)
             break;
-        if (rule[i].isOperator == false)
-        {
-            if (rule[i].isNot == true)
-            {
-                std::string toPush = (_facts[rule[i].value] == FALSE || _facts[rule[i].value] == UNDETERMINED) ? "true" : "false";
-                ruleFacts.push_back(toPush);
-            }
-            else
-            {
-                std::string toPush = (_facts[rule[i].value] == TRUE || _facts[rule[i].value] == UNDETERMINED) ? "true" : "false";
-                ruleFacts.push_back(toPush);
-            }
-        }
-        else
-            ruleFacts.push_back(rule[i].value);
         i++;
     }
 
-    if (DEBUG)
-    {
-        std::cout << "char in _facts that are true: ";
-        for (auto it : _facts)
-        {
-            if (it.second == TRUE)
-                std::cout << it.first;
-        }
-        std::cout << std::endl;
-    }
+    // if (DEBUG)
+    // {
+    //     std::cout << "char in _facts that are true: ";
+    //     for (auto it : _facts)
+    //     {
+    //         if (it.second == TRUE)
+    //             std::cout << it.first;
+    //     }
+    //     std::cout << std::endl;
+    // }
 
-    if (ruleFacts.size() == 1)
-    {
-        resultOperation = false;
-        if (ruleFacts.front() == "true")
-            resultOperation = true;
-        ruleFacts.pop_front();
-    }
-
-    while (!ruleFacts.empty())
-    {
-        unsigned long j = 0;
-        auto it = ruleFacts.begin();
-        while (*it == "false" || *it == "true")
-        {
-            it++;
-            j++;
-        }
-        std::string oper = *it;
-        it--;
-        std::string second = *it;
-        it--;
-        std::string first = *it;
-        resultOperation = calculateOperation(first, second, oper);
-        for (int l = 3; l > 0; l--)
-        {
-            auto it2 = ruleFacts.begin();
-            std::advance(it2, j - 2);
-            ruleFacts.erase(it2);
-        }
-        if (ruleFacts.empty())
-            break;
-        auto it2 = ruleFacts.begin();
-        std::advance(it2, j - 1);
-        std::string toInsert = resultOperation == true ? "true" : "false";
-        ruleFacts.insert(it2, toInsert);
-    }
     bool isUndetermined = false;
     if (resultOperation == false)
         return FALSE;
@@ -334,7 +254,8 @@ int ExpertSystem::checkCondition(std::vector<Token> rule)
                     std::cout << "exception?" << std::endl;
                     std::invalid_argument("Contradiction !");
                 }
-                else {
+                else
+                {
                     std::cout << rule[i] << std::endl;
                     _facts[rule[i].value] = FALSE;
                 }
@@ -356,62 +277,6 @@ int ExpertSystem::checkCondition(std::vector<Token> rule)
         return UNDETERMINED;
     return TRUE;
 };
-
-bool ExpertSystem::calculateOperation(std::string first, std::string second, std::string oper)
-{
-    int status = 0;
-    if (first == "true" && second == "true")
-        status = BOTH_TRUE;
-    else if (first == "false" && second == "false")
-        status = BOTH_FALSE;
-    else
-        status = TRUE_FALSE;
-
-    if (oper == "+")
-    {
-        if (status == BOTH_TRUE)
-            return true;
-        return false;
-    }
-    else if (oper == "|")
-    {
-        if (status == BOTH_TRUE || status == TRUE_FALSE)
-            return true;
-        return false;
-    }
-    else if (oper == "^")
-    {
-        if (status == TRUE_FALSE)
-            return true;
-        return false;
-    }
-    if (DEBUG)
-        std::cout << "NOT IN CONDITIONS ??" << std::endl
-                  << std::endl;
-    return false;
-}
-
-// std::vector<std::vector<Token>> ExpertSystem::createQueryNeighbours(std::vector<std::vector<Token>> rules, std::string query)
-// {
-//     std::vector<std::vector<Token>> neighbours;
-//     for (auto rule : rules)
-//     {
-//         for (auto token : rule)
-//             if (token.isResult == true && (token.value == query)) // || (token.value.size() == 2 && token.value[1] == query))) pas sur
-//             {
-//                 neighbours.push_back(rule);
-//                 break;
-//             }
-//     }
-//     // if (DEBUG)
-//     // {
-//     //     for (auto neighbour : neighbours)
-//     //         for (auto token : neighbour)
-//     //             std::cout << token << std::endl;
-//     //     std::cout << std::endl;
-//     // }
-//     return neighbours;
-// }
 
 void ExpertSystem::printDebug(std::string toInitialize)
 {
