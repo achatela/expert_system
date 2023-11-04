@@ -118,7 +118,7 @@ void ExpertSystem::expertLogic()
 
 std::map<std::string, int> ExpertSystem::recursiveLogic(std::map<std::string, int> facts, std::vector<std::vector<Token>> rules, std::vector<Token> currentRule)
 {
-    std::cout << "recursiveLogic start" << std::endl;
+    // std::cout << "recursiveLogic start" << std::endl;
     if (rules.empty())
         return checkCondition(facts, currentRule);
     std::set<std::string> queries;
@@ -204,7 +204,7 @@ int ExpertSystem::calculator(int first, int second, std::string op)
 
 std::map<std::string, int> ExpertSystem::checkCondition(std::map<std::string, int> facts, std::vector<Token> rule)
 {
-    std::cout << "checkCondition start" << std::endl;
+    // std::cout << "checkCondition start" << std::endl;
     (void)rule;
     if (DEBUG)
     {
@@ -237,7 +237,7 @@ std::map<std::string, int> ExpertSystem::checkCondition(std::map<std::string, in
     }
     //     return FALSE;
     bool isUndetermined = false;
-    std::cout << "before result" << std::endl;
+    // std::cout << "before result" << std::endl;
     if (resultOperation == true)
     {
         i++;
@@ -273,7 +273,7 @@ std::map<std::string, int> ExpertSystem::checkCondition(std::map<std::string, in
                 }
                 else
                 {
-                    std::cout << rule[i] << std::endl;
+                    // std::cout << rule[i] << std::endl;
                     facts[rule[i].value] = FALSE;
                 }
             }
