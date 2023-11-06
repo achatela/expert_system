@@ -28,8 +28,8 @@ ExpertSystem::ExpertSystem(std::string fileName)
                 if (line[i] == '=')
                 {
                     i++;
-                    if (i >= line.length())
-                        throw std::invalid_argument("Query line has to have atleast one character !");
+                    // if (i >= line.length())
+                    //     throw std::invalid_argument("Query line has to have atleast one character !");
                     while (i < line.length() && isupper(line[i]))
                         toInitialize.insert(std::string(1, line[i++]));
                 }
@@ -344,7 +344,7 @@ bool ExpertSystem::isCommentOrEmpty(std::string line) const
 {
     for (unsigned long i = 0; i < line.length(); i++)
     {
-        if (isalnum(line[i]))
+        if (isalnum(line[i]) || line[i] == '=')
             return (false);
         if (line[i] == '#')
             return (true);

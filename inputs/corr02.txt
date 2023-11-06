@@ -3,11 +3,11 @@ D ^ E => B
 B => C 
 
 
-# With =, A should be false. FIX "Query line is before the initial fact line !"
+# With =, A should be false. CORRECT
 # With =D, A should be true. CORRECT
 # With =E, A should be true. CORRECT
 # With =DE, A should be false. CORRECT
 
-=DE
+=
 
 ?A
