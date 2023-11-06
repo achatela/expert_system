@@ -68,12 +68,11 @@ public:
     bool isCommentOrEmpty(std::string) const;
     bool isInitialFact(std::string) const;
     bool isQuery(std::string) const;
-
-    //
     std::vector<Token> parseRule(std::string);
     std::vector<Token> makeRpnRule(std::vector<Token>);
+
+    //
     void printDebug(std::string);
-    void expertLogic();
     bool findQueryValue(char);
     std::vector<Token> findQueryRule(char);
     bool implyRule(std::vector<Token>);

@@ -62,14 +62,6 @@ ExpertSystem::ExpertSystem(std::string fileName)
             _rules.push_back(makeRpnRule(parseRule(line)));
     }
 
-    expertLogic();
-}
-
-ExpertSystem::~ExpertSystem() {}
-
-void ExpertSystem::expertLogic()
-{
-    std::vector<Token> initialRule;
     for (auto query : _queries)
         std::cout << query << " is " << findQueryValue(query) << std::endl;
     if (DEBUG)
@@ -77,6 +69,8 @@ void ExpertSystem::expertLogic()
             if (_queries.find(fact.first) == std::string::npos)
                 std::cout << fact.first << " is " << fact.second << std::endl;
 }
+
+ExpertSystem::~ExpertSystem() {}
 
 std::vector<Token> ExpertSystem::findQueryRule(char query) {
     for (auto rule : _rules) {
@@ -108,8 +102,11 @@ bool ExpertSystem::implyRule(std::vector<Token> rule)
     auto token = rule.begin();
     while (!token->isOperator && !token->isImplicator)
         token++;
-    if (token->isImplicator)
+    if (token->isImplicator) {
+        if ((token - 1)->isNot)
+            return !(_facts.find((token - 1)->value) != _facts.end() ? _facts[(token - 1)->value] : findQueryValue((token - 1)->value));
         return _facts.find((token - 1)->value) != _facts.end() ? _facts[(token - 1)->value] : findQueryValue((token - 1)->value);
+    }
     bool first = _facts.find((token - 2)->value) != _facts.end() ? _facts[(token - 2)->value] : findQueryValue((token - 2)->value);
     if ((token - 2)->isNot)
         first = !first;
@@ -127,9 +124,10 @@ bool ExpertSystem::implyRule(std::vector<Token> rule)
             token = rule.erase(token - 1, token + 1) - 1;
         }
     }
-    while (token != rule.end())
-        if (!token->isOperator && !token->isNot)
-            _facts[token->value] = true;
+    //fast version:
+    // for (; token != rule.end(); token++)
+    //     if (!token->isOperator && !token->isNot)
+    //         _facts[token->value] = first;
     if (DEBUG)
     {
         std::cout << "char in _facts that are true after set: ";
@@ -138,7 +136,7 @@ bool ExpertSystem::implyRule(std::vector<Token> rule)
                 std::cout << it.first;
         std::cout << std::endl;
     }
-    return true;
+    return first;
 };
 
 void ExpertSystem::printDebug(std::string toInitialize)
