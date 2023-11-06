@@ -111,9 +111,9 @@ void ExpertSystem::expertLogic()
                 std::cout << "undetermined" << std::endl;
         }
     }
-    if (DEBUG)
-        for (auto rule : _rules)
-            recursiveLogic(_facts, _rules, rule);
+    // if (DEBUG)
+    //     for (auto rule : _rules)
+    //         recursiveLogic(_facts, _rules, rule);
 }
 
 std::map<std::string, int> ExpertSystem::recursiveLogic(std::map<std::string, int> facts, std::vector<std::vector<Token>> rules, std::vector<Token> currentRule)
@@ -167,8 +167,19 @@ std::map<std::string, int> ExpertSystem::recursiveLogic(std::map<std::string, in
 int ExpertSystem::implier(std::map<std::string, int> facts, std::vector<Token> rule)
 {
     int result = -1;
-    for (auto token = rule.begin(); token != rule.end() && !token->isImplicator; token++)
+    for (auto token = rule.begin(); token != rule.end(); token++)
     {
+        if (token->isImplicator) {
+            if (token->value == "=>")
+                break;
+            if (result == -1)
+                result = facts.find((token - 1)->value) != facts.end() ? facts[(token - 1)->value] : FALSE;
+            result = calculator(result, implier(facts, std::vector<Token>(token + 1, rule.end())), "+");
+            if (result == FALSE) {
+                throw std::invalid_argument("Contradiction !");
+            }
+            return result;
+        }
         if (token->isOperator)
         {
             if (result == -1)
@@ -192,8 +203,9 @@ int ExpertSystem::implier(std::map<std::string, int> facts, std::vector<Token> r
             token = rule.erase(token - 1, token + 1) - 1;
         }
     }
-    if (result == -1)
+    if (result == -1){
         return facts.find(rule[0].value) != facts.end() ? facts[rule[0].value] : FALSE;
+    }
     return result;
 }
 
@@ -238,7 +250,10 @@ std::map<std::string, int> ExpertSystem::checkCondition(std::map<std::string, in
     unsigned long i = 0;
     while (i < rule.size() && !rule[i].isImplicator)
         i++;
-
+    if (rule[i].value == "<=>"){
+        std::cout << "<=> is TRUE" << std::endl;
+        return facts;
+    }
     // if (DEBUG)
     // {
     //     std::cout << "char in _facts that are true: ";
@@ -251,11 +266,7 @@ std::map<std::string, int> ExpertSystem::checkCondition(std::map<std::string, in
     // }
 
     if (resultOperation == false)
-    {
-        if (i == rule.size())
-            std::invalid_argument("Contradiction !");
         return facts;
-    }
     //     return FALSE;
     bool isUndetermined = false;
     // std::cout << "before result" << std::endl;
@@ -290,7 +301,7 @@ std::map<std::string, int> ExpertSystem::checkCondition(std::map<std::string, in
                 if (facts[rule[i].value] == TRUE)
                 {
                     std::cout << "exception?" << std::endl;
-                    std::invalid_argument("Contradiction !");
+                    throw std::invalid_argument("Contradiction !");
                 }
                 else
                 {
@@ -504,7 +515,7 @@ std::vector<Token> ExpertSystem::makeRpnRule(std::vector<Token> rule)
 {
     std::vector<Token> rpnRule;
     std::stack<Token> operatorStack;
-    bool biConditionalFound = false;
+    // bool biConditionalFound = false;
     for (auto token = rule.begin(); token != rule.end(); token++)
     {
         if (token->isFact || token->isResult)
@@ -522,10 +533,10 @@ std::vector<Token> ExpertSystem::makeRpnRule(std::vector<Token> rule)
 
             for (; !operatorStack.empty(); operatorStack.pop())
                 rpnRule.push_back(operatorStack.top());
-            if (token->value == "<=>")
-                biConditionalFound = true;
-            else
-                rpnRule.push_back(*token);
+            // if (token->value == "<=>")
+            //     biConditionalFound = true;
+            // else
+            rpnRule.push_back(*token);
         }
         else
         {
@@ -543,13 +554,13 @@ std::vector<Token> ExpertSystem::makeRpnRule(std::vector<Token> rule)
     }
     for (; !operatorStack.empty(); operatorStack.pop())
         rpnRule.push_back(operatorStack.top());
-    if (biConditionalFound)
-    {
-        Token token;
-        token.isOperator = true;
-        token.value = "+";
-        rule.push_back(token);
-    }
+    // if (biConditionalFound)
+    // {
+    //     Token token;
+    //     token.isOperator = true;
+    //     token.value = "+";
+    //     rule.push_back(token);
+    // }
 
     return rpnRule;
 }
