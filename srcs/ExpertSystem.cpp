@@ -177,7 +177,7 @@ int ExpertSystem::implier(std::map<std::string, int> facts, std::vector<Token> r
                 result = facts.find((token - 1)->value) != facts.end() ? facts[(token - 1)->value] : FALSE;
             if ((token - 1)->isNot)
                 result = result == TRUE ? FALSE : TRUE;
-            result = calculator(result, implier(facts, std::vector<Token>(token + 1, rule.end())), "+");
+            result = calculator(result, implier(facts, std::vector<Token>(token + 1, rule.end())), "<=>");
             if (result == FALSE)
                 throw std::invalid_argument("Contradiction !");
             return result;
@@ -209,7 +209,13 @@ int ExpertSystem::calculator(int first, int second, std::string op)
     if (DEBUG)
     {
     }
-    if (op == "+")
+    if (op == "<=>")
+    {
+        if ((first == TRUE && second == TRUE) || (first == FALSE && second == FALSE))
+            return TRUE;
+        return FALSE;
+    }
+    else if (op == "+")
     {
         if (first == TRUE && second == TRUE)
             return TRUE;
