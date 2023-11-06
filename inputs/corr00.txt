@@ -1,4 +1,4 @@
-https://github.com/Binary-Hackers/42_Corrections/blob/master/00_Projects/02_Algorithmic/expert_system/Expert%20System.txt#L96
+#https://github.com/Binary-Hackers/42_Corrections/blob/master/00_Projects/02_Algorithmic/expert_system/Expert%20System.txt#L96
 
 B => A 
 D + E => B 
@@ -13,5 +13,5 @@ N => M
 #With =DEIJOP, AFKP is true. CORRECT
 #With =DEIJP, AFP is true, K is false. CORRECT
 
-=DEIJOP
+=DEIJP
 ?AFKP

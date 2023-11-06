@@ -6,5 +6,5 @@ C => A
 # With =C, A should be true. CORRECT
 # With =BC, A should be true. CORRECT
 
-=C
+=BC
 ?A

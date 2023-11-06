@@ -173,7 +173,22 @@ int ExpertSystem::implier(std::map<std::string, int> facts, std::vector<Token> r
         {
             if (result == -1)
                 result = facts.find((token - 2)->value) != facts.end() ? facts[(token - 2)->value] : FALSE;
-            result = calculator(result, facts.find((token - 1)->value) != facts.end() ? facts[(token - 1)->value] : FALSE, token->value);
+            if ((token - 2)->isNot == true)
+            {
+                if (result == TRUE)
+                    result = FALSE;
+                else
+                    result = TRUE;
+            }
+            int result2 = facts.find((token - 1)->value) != facts.end() ? facts[(token - 1)->value] : FALSE;
+            if ((token - 1)->isNot == true)
+            {
+                if (result2 == TRUE)
+                    result2 = FALSE;
+                else
+                    result2 = TRUE;
+            }
+            result = calculator(result, result2, token->value);
             token = rule.erase(token - 1, token + 1) - 1;
         }
     }
