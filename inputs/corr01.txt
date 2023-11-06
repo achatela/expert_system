@@ -2,10 +2,10 @@ B + C => A
 D | E => B 
 B => C 
 
-# With =, A should be false. FIX "Query line is before the initial fact line !"
+# With =, A should be false. FIX
 # With =D, A should be true. CORRECT
-# With =E, A should be true. FIX
-# With =DE, A should be false. FIX
+# With =E, A should be true. CORRECT
+# With =DE, A should be true. CORRECT
 
 =DE
 ?A 

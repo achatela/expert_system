@@ -167,7 +167,7 @@ std::map<std::string, int> ExpertSystem::recursiveLogic(std::map<std::string, in
 int ExpertSystem::implier(std::map<std::string, int> facts, std::vector<Token> rule)
 {
     int result = -1;
-    for (auto token = rule.begin(); token != rule.end() && token->isImplicator; token++)
+    for (auto token = rule.begin(); token != rule.end() && !token->isImplicator; token++)
     {
         if (token->isOperator)
         {
@@ -210,7 +210,7 @@ std::map<std::string, int> ExpertSystem::checkCondition(std::map<std::string, in
     (void)rule;
     if (DEBUG)
     {
-        // std::cout << "rule looks like that :" << std::endl;
+        // std::cout << "rule looks like that in checkCondition:" << std::endl;
         for (auto it : rule)
             std::cout << it.value << " ";
         std::cout << std::endl;
