@@ -122,7 +122,7 @@ std::map<std::string, int> ExpertSystem::recursiveLogic(std::map<std::string, in
     if (rules.empty())
         return checkCondition(facts, currentRule);
     std::set<std::string> queries;
-    for (auto token = currentRule.begin(); token != currentRule.end() && token->value == "=>"; token++)
+    for (auto token = currentRule.begin(); token != currentRule.end() && token->value != "=>"; token++)
         if (token->isFact)
             queries.insert(token->value);
     for (auto rule = rules.begin(); rule != rules.end(); rule++)
@@ -169,13 +169,15 @@ int ExpertSystem::implier(std::map<std::string, int> facts, std::vector<Token> r
     int result = -1;
     for (auto token = rule.begin(); token != rule.end(); token++)
     {
-        if (token->isImplicator) {
+        if (token->isImplicator)
+        {
             if (token->value == "=>")
                 break;
             if (result == -1)
                 result = facts.find((token - 1)->value) != facts.end() ? facts[(token - 1)->value] : FALSE;
             result = calculator(result, implier(facts, std::vector<Token>(token + 1, rule.end())), "+");
-            if (result == FALSE) {
+            if (result == FALSE)
+            {
                 throw std::invalid_argument("Contradiction !");
             }
             return result;
@@ -203,7 +205,8 @@ int ExpertSystem::implier(std::map<std::string, int> facts, std::vector<Token> r
             token = rule.erase(token - 1, token + 1) - 1;
         }
     }
-    if (result == -1){
+    if (result == -1)
+    {
         return facts.find(rule[0].value) != facts.end() ? facts[rule[0].value] : FALSE;
     }
     return result;
@@ -250,7 +253,8 @@ std::map<std::string, int> ExpertSystem::checkCondition(std::map<std::string, in
     unsigned long i = 0;
     while (i < rule.size() && !rule[i].isImplicator)
         i++;
-    if (rule[i].value == "<=>"){
+    if (i != rule.size() && rule[i].value == "<=>")
+    {
         std::cout << "<=> is TRUE" << std::endl;
         return facts;
     }
