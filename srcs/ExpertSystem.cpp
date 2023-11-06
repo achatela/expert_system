@@ -122,7 +122,7 @@ std::map<std::string, int> ExpertSystem::recursiveLogic(std::map<std::string, in
     if (rules.empty())
         return checkCondition(facts, currentRule);
     std::set<std::string> queries;
-    for (auto token = currentRule.begin(); token != currentRule.end() && !token->isImplicator; token++)
+    for (auto token = currentRule.begin(); token != currentRule.end() && token->value == "=>"; token++)
         if (token->isFact)
             queries.insert(token->value);
     for (auto rule = rules.begin(); rule != rules.end(); rule++)
