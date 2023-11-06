@@ -7,5 +7,5 @@ B => C
 # With =E, A should be true. CORRECT
 # With =DE, A should be true. CORRECT
 
-=DE
+=
 ?A 

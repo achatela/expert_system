@@ -8,6 +8,6 @@ B => C
 # With =E, A should be true. CORRECT
 # With =DE, A should be false. CORRECT
 
-=DE
+=
 
 ?A

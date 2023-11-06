@@ -13,5 +13,5 @@ N => M
 #With =DEIJOP, AFKP is true. CORRECT
 #With =DEIJP, AFP is true, K is false. CORRECT
 
-=DEIJOP
+=DEIJP
 ?AFKP
