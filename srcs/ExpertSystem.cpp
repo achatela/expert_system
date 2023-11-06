@@ -167,8 +167,10 @@ std::map<std::string, int> ExpertSystem::recursiveLogic(std::map<std::string, in
 int ExpertSystem::implier(std::map<std::string, int> facts, std::vector<Token> rule)
 {
     int result = -1;
-    for (auto token = rule.begin(); token != rule.end() && token->isImplicator; token++) {
-        if (token->isOperator) {
+    for (auto token = rule.begin(); token != rule.end() && token->isImplicator; token++)
+    {
+        if (token->isOperator)
+        {
             if (result == -1)
                 result = facts.find((token - 2)->value) != facts.end() ? facts[(token - 2)->value] : FALSE;
             result = calculator(result, facts.find((token - 1)->value) != facts.end() ? facts[(token - 1)->value] : FALSE, token->value);
@@ -230,7 +232,8 @@ std::map<std::string, int> ExpertSystem::checkCondition(std::map<std::string, in
     //     std::cout << std::endl;
     // }
 
-    if (resultOperation == false) {
+    if (resultOperation == false)
+    {
         if (i == rule.size())
             std::invalid_argument("Contradiction !");
         return facts;
@@ -498,7 +501,7 @@ std::vector<Token> ExpertSystem::makeRpnRule(std::vector<Token> rule)
         }
         else if (token->isImplicator)
         {
-            
+
             for (; !operatorStack.empty(); operatorStack.pop())
                 rpnRule.push_back(operatorStack.top());
             if (token->value == "<=>")
@@ -522,7 +525,8 @@ std::vector<Token> ExpertSystem::makeRpnRule(std::vector<Token> rule)
     }
     for (; !operatorStack.empty(); operatorStack.pop())
         rpnRule.push_back(operatorStack.top());
-    if (biConditionalFound){
+    if (biConditionalFound)
+    {
         Token token;
         token.isOperator = true;
         token.value = "+";

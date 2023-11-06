@@ -1,0 +1,9 @@
+B + !C => A 
+
+# With =, A should be false. FIX
+# With =B, A should be true. CORRECT
+# With =C, A should be false. CORRECT
+# With =BC, A should be false. FIX
+
+=BC
+?A
