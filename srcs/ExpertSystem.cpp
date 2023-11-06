@@ -199,6 +199,9 @@ int ExpertSystem::implier(std::map<std::string, int> facts, std::vector<Token> r
 
 int ExpertSystem::calculator(int first, int second, std::string op)
 {
+    if (DEBUG)
+    {
+    }
     if (op == "+")
     {
         if (first == TRUE && second == TRUE)
