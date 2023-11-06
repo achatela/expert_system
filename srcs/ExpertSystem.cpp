@@ -175,39 +175,31 @@ int ExpertSystem::implier(std::map<std::string, int> facts, std::vector<Token> r
                 break;
             if (result == -1)
                 result = facts.find((token - 1)->value) != facts.end() ? facts[(token - 1)->value] : FALSE;
+            if ((token - 1)->isNot)
+                result = result == TRUE ? FALSE : TRUE;
             result = calculator(result, implier(facts, std::vector<Token>(token + 1, rule.end())), "+");
             if (result == FALSE)
-            {
                 throw std::invalid_argument("Contradiction !");
-            }
             return result;
         }
         if (token->isOperator)
         {
             if (result == -1)
                 result = facts.find((token - 2)->value) != facts.end() ? facts[(token - 2)->value] : FALSE;
-            if ((token - 2)->isNot == true)
-            {
-                if (result == TRUE)
-                    result = FALSE;
-                else
-                    result = TRUE;
-            }
+            if ((token - 2)->isNot)
+                result = result == TRUE ? FALSE : TRUE;
             int result2 = facts.find((token - 1)->value) != facts.end() ? facts[(token - 1)->value] : FALSE;
-            if ((token - 1)->isNot == true)
-            {
-                if (result2 == TRUE)
-                    result2 = FALSE;
-                else
-                    result2 = TRUE;
-            }
+            if ((token - 1)->isNot)
+                result2 = result2 == TRUE ? FALSE : TRUE;
             result = calculator(result, result2, token->value);
             token = rule.erase(token - 1, token + 1) - 1;
         }
     }
     if (result == -1)
     {
-        return facts.find(rule[0].value) != facts.end() ? facts[rule[0].value] : FALSE;
+        result = facts.find(rule[0].value) != facts.end() ? facts[rule[0].value] : FALSE;
+        if (rule[0].isNot)
+            return result = result == TRUE ? FALSE : TRUE;
     }
     return result;
 }

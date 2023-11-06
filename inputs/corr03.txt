@@ -5,5 +5,5 @@ B + !C => A
 # With =C, A should be false. CORRECT
 # With =BC, A should be false. CORRECT
 
-=BC
+=
 ?A
