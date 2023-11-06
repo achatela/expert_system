@@ -12,7 +12,6 @@ ExpertSystem::ExpertSystem(std::string fileName)
     std::ifstream ifs(fileName);
     bool initialized = false;
     bool queryInitialized = false;
-    std::set<std::string> toInitialize;
     for (std::string line; std::getline(ifs, line);)
     {
         if (isCommentOrEmpty(line))
@@ -29,7 +28,7 @@ ExpertSystem::ExpertSystem(std::string fileName)
                 {
                     i++;
                     while (i < line.length() && isupper(line[i]))
-                        toInitialize.insert(std::string(1, line[i++]));
+                        _facts[line[i++]] = true;
                 }
                 else
                     break;
@@ -60,10 +59,8 @@ ExpertSystem::ExpertSystem(std::string fileName)
             queryInitialized = true;
         }
         else
-            addRule(line);
+            _rules.push_back(makeRpnRule(parseRule(line)));
     }
-    for (auto c : toInitialize)
-        _facts[c] = TRUE;
 
     expertLogic();
 }
@@ -74,204 +71,74 @@ void ExpertSystem::expertLogic()
 {
     std::vector<Token> initialRule;
     for (auto query : _queries)
-    {
-        Token token;
-        token.isFact = true;
-        token.value = query;
-        initialRule.push_back(token);
-    }
-    std::map<std::string, int> backFacts = recursiveLogic(_facts, _rules, initialRule);
-    _facts = backFacts;
-    for (auto fact : _facts)
-    {
-        if (DEBUG || _queries.find(fact.first) != std::string::npos)
-        {
-            std::cout << fact.first << " is ";
-            if (fact.second == TRUE)
-                std::cout << "true" << std::endl;
-            else if (fact.second == FALSE)
-                std::cout << "false" << std::endl;
-            else
-                std::cout << "undetermined" << std::endl;
-        }
-    }
+        std::cout << query << " is " << findQueryValue(query) << std::endl;
+    if (DEBUG)
+        for (auto fact : _facts)
+            if (_queries.find(fact.first) == std::string::npos)
+                std::cout << fact.first << " is " << fact.second << std::endl;
 }
 
-std::map<std::string, int> ExpertSystem::recursiveLogic(std::map<std::string, int> facts, std::vector<std::vector<Token>> rules, std::vector<Token> currentRule)
-{
-    if (rules.empty())
-        return checkCondition(facts, currentRule);
-    std::set<std::string> queries;
-    for (auto token = currentRule.begin(); token != currentRule.end() && token->value != "=>"; token++)
-        if (token->isFact)
-            queries.insert(token->value);
-    for (auto rule = rules.begin(); rule != rules.end(); rule++)
-    {
-        for (auto token = rule->begin(); token != rule->end(); token++)
-        {
-            if (token->isResult && queries.find(token->value) != queries.end())
-            {
-                auto backRule = *rule;
-                rule = rules.erase(rule) - 1;
-                std::map<std::string, int> backFacts = recursiveLogic(facts, rules, backRule);
-                facts = backFacts;
-                break;
-            }
-        }
+std::vector<Token> ExpertSystem::findQueryRule(char query) {
+    for (auto rule : _rules) {
+        auto token = rule.begin();
+        while (!token->isImplicator)
+            token++;
+        for (; token != rule.end(); token++)
+            if (token->value == query)
+                return rule;
     }
-    return checkCondition(facts, currentRule);
+    return std::vector<Token>();
 }
 
-int ExpertSystem::implier(std::map<std::string, int> facts, std::vector<Token> rule)
+bool ExpertSystem::findQueryValue(char query)
 {
-    int result = -1;
-    for (auto token = rule.begin(); token != rule.end(); token++)
-    {
-        if (token->isImplicator)
-        {
-            if (token->value == "=>")
-                break;
-            if (result == -1)
-                result = facts.find((token - 1)->value) != facts.end() ? facts[(token - 1)->value] : FALSE;
-            if ((token - 1)->isNot)
-                result = result == TRUE ? FALSE : TRUE;
-            result = calculator(result, implier(facts, std::vector<Token>(token + 1, rule.end())), "<=>");
-            if (result == FALSE)
-                throw std::invalid_argument("Contradiction !");
-            return result;
-        }
-        if (token->isOperator)
-        {
-            int tmp = result == -1 ? 2 : 1;
-            if (result == -1)
-            {
-                result = facts.find((token - 2)->value) != facts.end() ? facts[(token - 2)->value] : FALSE;
-                if ((token - 2)->isNot)
-                    result = result == TRUE ? FALSE : TRUE;
-            }
-            int result2 = facts.find((token - 1)->value) != facts.end() ? facts[(token - 1)->value] : FALSE;
-            if ((token - 1)->isNot)
-                result2 = result2 == TRUE ? FALSE : TRUE;
-            result = calculator(result, result2, token->value);
-            token = rule.erase(token - tmp, token + 1) - 1;
-        }
-    }
-    if (result == -1)
-    {
-        result = facts.find(rule[0].value) != facts.end() ? facts[rule[0].value] : FALSE;
-        if (rule[0].isNot)
-            return result = result == TRUE ? FALSE : TRUE;
-    }
-    return result;
+    return _facts.find(query) != _facts.end() ? _facts[query] : implyRule(findQueryRule(query));
 }
 
-int ExpertSystem::calculator(int first, int second, std::string op)
+bool ExpertSystem::implyRule(std::vector<Token> rule)
 {
-    if (op == "<=>")
-    {
-        if ((first == TRUE && second == TRUE) || (first == FALSE && second == FALSE))
-            return TRUE;
-        return FALSE;
-    }
-    else if (op == "+")
-    {
-        if (first == TRUE && second == TRUE)
-            return TRUE;
-        return FALSE;
-    }
-    else if (op == "|")
-    {
-        if (first == TRUE || second == TRUE)
-            return TRUE;
-        return FALSE;
-    }
-    else
-    {
-        if ((first == TRUE && second == FALSE) || (first == FALSE && second == TRUE))
-            return TRUE;
-        return FALSE;
-    }
-}
-
-std::map<std::string, int> ExpertSystem::checkCondition(std::map<std::string, int> facts, std::vector<Token> rule)
-{
-    (void)rule;
+    if (rule.empty())
+        return false;
     if (DEBUG)
     {
         for (auto it : rule)
             std::cout << it.value << " ";
         std::cout << std::endl;
     }
-    bool resultOperation = false;
-    resultOperation = implier(facts, rule);
-    unsigned long i = 0;
-    while (i < rule.size() && !rule[i].isImplicator)
-        i++;
-    if (i != rule.size() && rule[i].value == "<=>")
-    {
-        std::cout << "<=> is TRUE" << std::endl;
-        return facts;
-    }
-
-    if (resultOperation == false)
-    {
-        // i = -1;
-        // while (++i < rule.size())
-        //     if (rule[i].isResult)
-        //         facts[rule[i].value] = FALSE;
-        return facts;
-    }
-    bool isUndetermined = false;
-    if (resultOperation == true)
-    {
-        i++;
-        unsigned long j = i;
-        while (j < rule.size())
-        {
-            if (rule[j].isOperator == true)
-            {
-                if (rule[j].value == "|" || rule[j].value == "^")
-                {
-                    isUndetermined = true;
-                    break;
-                }
-            }
-            j++;
-        }
-        while (i < rule.size())
-        {
-            if (rule[i].isResult == true && isUndetermined == true)
-            {
-                facts[rule[i].value] = UNDETERMINED;
-                i++;
-                continue;
-            }
-            if (rule[i].isResult == true && rule[i].isNot == false)
-                facts[rule[i].value] = TRUE;
+    auto token = rule.begin();
+    while (!token->isOperator && !token->isImplicator)
+        token++;
+    if (token->isImplicator)
+        return _facts.find((token - 1)->value) != _facts.end() ? _facts[(token - 1)->value] : findQueryValue((token - 1)->value);
+    bool first = _facts.find((token - 2)->value) != _facts.end() ? _facts[(token - 2)->value] : findQueryValue((token - 2)->value);
+    if ((token - 2)->isNot)
+        first = !first;
+    for (; !token->isImplicator; token++) {
+        if (token->isOperator) {
+            bool second = _facts.find((token - 1)->value) != _facts.end() ? _facts[(token - 1)->value] : findQueryValue((token - 1)->value);
+            if ((token - 1)->isNot)
+                second = !second;
+            if (token->value == '+')
+                first = first + second;
+            else if (token->value == '|')
+                first = first | second;
             else
-            {
-                if (facts[rule[i].value] == TRUE)
-                {
-                    facts[rule[i].value] = FALSE;
-                    throw std::invalid_argument("Contradiction !");
-                }
-                else
-                    facts[rule[i].value] = FALSE;
-            }
-            i++;
-        };
+                first = first ^ second;
+            token = rule.erase(token - 1, token + 1) - 1;
+        }
     }
+    while (token != rule.end())
+        if (!token->isOperator && !token->isNot)
+            _facts[token->value] = true;
     if (DEBUG)
     {
         std::cout << "char in _facts that are true after set: ";
-        for (auto it : facts)
-        {
-            if (it.second == TRUE)
+        for (auto it : _facts)
+            if (it.second)
                 std::cout << it.first;
-        }
         std::cout << std::endl;
     }
-    return facts;
+    return true;
 };
 
 void ExpertSystem::printDebug(std::string toInitialize)
@@ -366,8 +233,7 @@ bool ExpertSystem::isInitialFact(std::string line) const
     return (true);
 }
 
-void ExpertSystem::addRule(std::string line)
-{
+std::vector<Token> ExpertSystem::parseRule(std::string line) { 
     std::vector<Token> rule;
     bool implicatorFound = false;
     int openCount = 0;
@@ -377,7 +243,7 @@ void ExpertSystem::addRule(std::string line)
             continue;
         if (line[i] == '(')
         {
-            if (!rule.empty() && (rule.back().isFact || rule.back().isResult))
+            if (!rule.empty() && !rule.back().isOperator && !rule.back().isImplicator)
                 throw std::invalid_argument("A line has invalid format !");
             Token token;
             token.value = line[i];
@@ -386,7 +252,7 @@ void ExpertSystem::addRule(std::string line)
         }
         else if (line[i] == ')')
         {
-            if ((!rule.empty() && (!rule.back().isFact && !rule.back().isResult) && rule.back().value != ")") || !openCount)
+            if (!openCount || (!rule.empty() && !rule.back().isOperator && !rule.back().isImplicator))
                 throw std::invalid_argument("A line has invalid format !");
             Token token;
             token.value = line[i];
@@ -395,32 +261,24 @@ void ExpertSystem::addRule(std::string line)
         }
         else if (line[i] > 64 && line[i] < 91)
         {
-            if (!rule.empty() && (rule.back().value == ")" || rule.back().isFact || rule.back().isResult))
+            if (!rule.empty() && !rule.back().isOperator && !rule.back().isImplicator)
                 throw std::invalid_argument("A line has invalid format !");
             Token token;
-            if (implicatorFound == false)
-                token.isFact = true;
-            else
-                token.isResult = true;
             token.value = line[i];
             rule.push_back(token);
         }
         else if (line[i] == '!' && line[i + 1] > 64 && line[i + 1] < 91)
         {
-            if (!rule.empty() && (rule.back().value == ")" || rule.back().isFact || rule.back().isResult))
+            if (!rule.empty() && !rule.back().isOperator && !rule.back().isImplicator)
                 throw std::invalid_argument("A line has invalid format !");
             Token token;
-            if (implicatorFound == false)
-                token.isFact = true;
-            else
-                token.isResult = true;
             token.isNot = true;
             token.value = line[++i];
             rule.push_back(token);
         }
         else if (line[i] == '+' || line[i] == '|' || line[i] == '^')
         {
-            if (rule.empty() || rule.back().isImplicator || rule.back().value == "(")
+            if (rule.empty() || rule.back().isImplicator || rule.back().value == '(')
                 throw std::invalid_argument("A line has invalid format !");
             Token token;
             token.isOperator = true;
@@ -429,46 +287,29 @@ void ExpertSystem::addRule(std::string line)
         }
         else if (line[i] == '=' && line[i + 1] == '>')
         {
-            if (rule.empty() || rule.back().isImplicator || rule.back().value == "(" || implicatorFound)
+            if (rule.empty() || openCount || implicatorFound)
                 throw std::invalid_argument("A line has invalid format !");
             Token token;
             token.isImplicator = true;
-            token.value = "=>";
             rule.push_back(token);
             implicatorFound = true;
             i++;
         }
-        else if (line[i] == '<' && line[i + 1] == '=' && line[i + 2] == '>')
-        {
-            if (rule.empty() || rule.back().isImplicator || rule.back().value == "(" || implicatorFound)
-                throw std::invalid_argument("A line has invalid format !");
-            Token token;
-            token.isImplicator = true;
-            token.value = "<=>";
-            rule.push_back(token);
-            implicatorFound = true;
-            i += 2;
-        }
         else
             throw std::invalid_argument("A line has invalid format !");
     }
-    if (openCount || implicatorFound == false || (!rule.back().isResult && rule.back().value != ")"))
+    if (openCount || implicatorFound == false || rule.back().isOperator || rule.back().isImplicator)
         throw std::invalid_argument("A line has invalid format !");
-    _rules.push_back(makeRpnRule(rule));
+    return rule;
 }
 
 std::vector<Token> ExpertSystem::makeRpnRule(std::vector<Token> rule)
 {
     std::vector<Token> rpnRule;
     std::stack<Token> operatorStack;
-    // bool biConditionalFound = false;
     for (auto token = rule.begin(); token != rule.end(); token++)
     {
-        if (token->isFact || token->isResult)
-        {
-            rpnRule.push_back(*token);
-        }
-        else if (token->isOperator)
+        if (token->isOperator)
         {
             for (auto priority = _priorities.find(token->value); !operatorStack.empty() && _priorities.find(operatorStack.top().value)->second <= priority->second; operatorStack.pop())
                 rpnRule.push_back(operatorStack.top());
@@ -481,19 +322,20 @@ std::vector<Token> ExpertSystem::makeRpnRule(std::vector<Token> rule)
                 rpnRule.push_back(operatorStack.top());
             rpnRule.push_back(*token);
         }
-        else
+        else if (token->value == '(')
         {
             std::vector<Token> subRule;
-            for (int openCount = 0; (++token)->value != ")" || openCount; subRule.push_back(*token))
+            for (int openCount = 0; (++token)->value != ')' || openCount; subRule.push_back(*token))
             {
-                if (token->value == "(")
+                if (token->value == '(')
                     openCount++;
-                else if (token->value == ")")
+                else if (token->value == ')')
                     openCount--;
             }
             std::vector<Token> subRpnRule = makeRpnRule(subRule);
             rpnRule.insert(rpnRule.end(), subRpnRule.begin(), subRpnRule.end());
-        }
+        } else
+            rpnRule.push_back(*token);
     }
     for (; !operatorStack.empty(); operatorStack.pop())
         rpnRule.push_back(operatorStack.top());
