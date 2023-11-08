@@ -57,7 +57,7 @@ private:
     std::vector<std::vector<Token>> _rules;
     std::map<char, bool> _facts;
     std::string _queries;
-    std::map<char, bool> _priorities = {std::pair<char, bool>('+', 1), std::pair<char, bool>('|', 2), std::pair<char, bool>('^', 3)};
+    std::map<char, int> _priorities = {std::pair<char, int>('+', 1), std::pair<char, int>('|', 2), std::pair<char, int>('^', 3)};
 
 public:
     // Constructors/Destructors
@@ -73,7 +73,7 @@ public:
 
     //
     void printDebug(std::string);
-    bool findQueryValue(char);
-    std::vector<Token> findQueryRule(char);
-    bool implyRule(std::vector<Token>);
+    bool findQueryValue(char, std::vector<std::vector<Token>>);
+    std::vector<std::vector<Token>> findQueryRule(char, std::vector<std::vector<Token>>&);
+    bool implyRule(std::vector<std::vector<Token>>, std::vector<Token>, char);
 };
