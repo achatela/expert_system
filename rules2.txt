@@ -1,6 +1,9 @@
 
 !A + C => B
+!A | C => D
+!A ^ C => E
+!A ^ !C => F + G
 
-=A
+=AC
 
-?B
+?BDEFG

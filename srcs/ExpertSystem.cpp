@@ -72,6 +72,11 @@ ExpertSystem::ExpertSystem(std::string fileName)
 
 ExpertSystem::~ExpertSystem() {}
 
+bool ExpertSystem::findQueryValue(char query)
+{
+    return _facts.find(query) != _facts.end() ? _facts[query] : implyRule(findQueryRule(query));
+}
+
 std::vector<Token> ExpertSystem::findQueryRule(char query) {
     for (auto rule : _rules) {
         auto token = rule.begin();
@@ -82,11 +87,6 @@ std::vector<Token> ExpertSystem::findQueryRule(char query) {
                 return rule;
     }
     return std::vector<Token>();
-}
-
-bool ExpertSystem::findQueryValue(char query)
-{
-    return _facts.find(query) != _facts.end() ? _facts[query] : implyRule(findQueryRule(query));
 }
 
 bool ExpertSystem::implyRule(std::vector<Token> rule)
@@ -116,18 +116,14 @@ bool ExpertSystem::implyRule(std::vector<Token> rule)
             if ((token - 1)->isNot)
                 second = !second;
             if (token->value == '+')
-                first = first + second;
+                first = first && second;
             else if (token->value == '|')
-                first = first | second;
+                first = first || second;
             else
                 first = first ^ second;
             token = rule.erase(token - 1, token + 1) - 1;
         }
     }
-    //fast version:
-    // for (; token != rule.end(); token++)
-    //     if (!token->isOperator && !token->isNot)
-    //         _facts[token->value] = first;
     if (DEBUG)
     {
         std::cout << "char in _facts that are true after set: ";
@@ -276,7 +272,7 @@ std::vector<Token> ExpertSystem::parseRule(std::string line) {
         }
         else if (line[i] == '+' || line[i] == '|' || line[i] == '^')
         {
-            if (rule.empty() || rule.back().isImplicator || rule.back().value == '(')
+            if (rule.empty() || rule.back().isImplicator || rule.back().value == '(' || (implicatorFound && line[i] != '+'))
                 throw std::invalid_argument("A line has invalid format !");
             Token token;
             token.isOperator = true;
@@ -285,7 +281,7 @@ std::vector<Token> ExpertSystem::parseRule(std::string line) {
         }
         else if (line[i] == '=' && line[i + 1] == '>')
         {
-            if (rule.empty() || openCount || implicatorFound)
+            if (rule.empty() || openCount || implicatorFound || rule.back().isOperator)
                 throw std::invalid_argument("A line has invalid format !");
             Token token;
             token.isImplicator = true;
