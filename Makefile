@@ -24,4 +24,4 @@ fclean: clean
 
 .PHONY: DEBUG
 debug: CFLAGS += -DDEBUG=1
-debug: $(OBJS) $(TARGET)
+debug: clean $(OBJS) $(TARGET)
